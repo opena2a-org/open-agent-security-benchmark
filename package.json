@@ -1,0 +1,28 @@
+{
+  "name": "@opena2a/arp-lab",
+  "version": "0.1.0",
+  "description": "Comprehensive runtime security testing lab for ARP (Agent Runtime Protection)",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:atomic": "vitest run src/atomic/",
+    "test:integration": "vitest run src/integration/",
+    "test:baseline": "vitest run src/baseline/",
+    "test:watch": "vitest",
+    "report": "npx tsx scripts/generate-report.ts"
+  },
+  "dependencies": {
+    "@opena2a/arp": "file:../opena2a-arp"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.3",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "OpenA2A",
+  "license": "Apache-2.0"
+}
