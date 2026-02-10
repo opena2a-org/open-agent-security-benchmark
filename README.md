@@ -1,23 +1,32 @@
 # OASB — Open Agent Security Benchmark
 
-Standardized attack scenarios for evaluating AI agent runtime security products. 182 tests across 42 files, mapped to MITRE ATLAS and OWASP Agentic Top 10.
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Tests](https://img.shields.io/badge/tests-182%20passing-brightgreen)](https://github.com/opena2a-org/oasb)
+[![MITRE ATLAS](https://img.shields.io/badge/MITRE%20ATLAS-10%20techniques-teal)](https://atlas.mitre.org/)
 
-OASB answers one question: **can your security product actually detect attacks against AI agents?**
+**Can your security product actually detect attacks against AI agents?**
 
-## What Gets Tested
+182 standardized attack scenarios across 42 test files, mapped to MITRE ATLAS and OWASP Agentic Top 10. Run OASB against any agent runtime security product to measure detection coverage.
 
-| Category | Tests | What It Evaluates |
-|----------|-------|-------------------|
-| Process detection | 25 | Child process spawns, suspicious binaries, privilege escalation, CPU anomalies |
-| Network detection | 20 | Outbound connections, suspicious hosts, exfiltration, subdomain bypass |
-| Filesystem detection | 28 | Sensitive path access, credential files, dotfile persistence, mass file DoS |
-| Intelligence layers | 21 | Rule matching, anomaly scoring, LLM escalation, budget exhaustion |
-| Enforcement actions | 18 | Logging, alerting, process pause (SIGSTOP), kill (SIGTERM/SIGKILL), resume |
-| Multi-step attacks | 33 | Data exfiltration chains, MCP tool abuse, prompt injection, A2A trust exploitation |
-| Baseline behavior | 13 | False positive rates, anomaly injection, baseline persistence |
-| Real OS detection | 14 | Live filesystem watches, process polling, network monitoring |
-| Application-level hooks | 14 | Pre-execution interception of spawn, connect, read/write |
-| **Total** | **182** | **10 MITRE ATLAS techniques** |
+[OASB Website](https://oasb.ai) | [OpenA2A](https://opena2a.org) | [MITRE ATLAS Coverage](#mitre-atlas-coverage) | [ARP (Reference Adapter)](https://github.com/opena2a-org/arp)
+
+---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [What Gets Tested](#what-gets-tested)
+- [Test Categories](#test-categories)
+  - [Atomic Tests](#atomic-tests-srcatomic) — 25 discrete detection tests
+  - [Integration Tests](#integration-tests-srcintegration) — 8 multi-step attack chains
+  - [Baseline Tests](#baseline-tests-srcbaseline) — 3 false positive validations
+  - [E2E Tests](#e2e-tests-srce2e) — 6 real OS-level detection tests
+- [MITRE ATLAS Coverage](#mitre-atlas-coverage)
+- [Test Harness](#test-harness)
+- [Known Detection Gaps](#known-detection-gaps)
+- [License](#license)
+
+---
 
 ## Quick Start
 
@@ -41,13 +50,33 @@ npm run test:baseline       # 3 baseline tests
 npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 ```
 
+---
+
+## What Gets Tested
+
+| Category | Tests | What It Evaluates |
+|----------|-------|-------------------|
+| Process detection | 25 | Child process spawns, suspicious binaries, privilege escalation, CPU anomalies |
+| Network detection | 20 | Outbound connections, suspicious hosts, exfiltration, subdomain bypass |
+| Filesystem detection | 28 | Sensitive path access, credential files, dotfile persistence, mass file DoS |
+| Intelligence layers | 21 | Rule matching, anomaly scoring, LLM escalation, budget exhaustion |
+| Enforcement actions | 18 | Logging, alerting, process pause (SIGSTOP), kill (SIGTERM/SIGKILL), resume |
+| Multi-step attacks | 33 | Data exfiltration chains, MCP tool abuse, prompt injection, A2A trust exploitation |
+| Baseline behavior | 13 | False positive rates, anomaly injection, baseline persistence |
+| Real OS detection | 14 | Live filesystem watches, process polling, network monitoring |
+| Application-level hooks | 14 | Pre-execution interception of spawn, connect, read/write |
+| **Total** | **182** | **10 MITRE ATLAS techniques** |
+
+---
+
 ## Test Categories
 
 ### Atomic Tests (`src/atomic/`)
 
 Discrete tests that exercise individual detection capabilities via direct event injection. No external dependencies required.
 
-**Process Detection** — 5 files
+<details>
+<summary><strong>Process Detection</strong> — 5 files</summary>
 
 | Test | ATLAS | What It Proves |
 |------|-------|----------------|
@@ -57,7 +86,10 @@ Discrete tests that exercise individual detection capabilities via direct event 
 | AT-PROC-004 | AML.T0046 | Privilege escalation (root user) |
 | AT-PROC-005 | AML.TA0006 | Process termination tracking |
 
-**Network Detection** — 5 files
+</details>
+
+<details>
+<summary><strong>Network Detection</strong> — 5 files</summary>
 
 | Test | ATLAS | What It Proves |
 |------|-------|----------------|
@@ -67,7 +99,10 @@ Discrete tests that exercise individual detection capabilities via direct event 
 | AT-NET-004 | AML.T0024 | Subdomain bypass prevention |
 | AT-NET-005 | AML.T0057 | Exfiltration destination detection |
 
-**Filesystem Detection** — 5 files
+</details>
+
+<details>
+<summary><strong>Filesystem Detection</strong> — 5 files</summary>
 
 | Test | ATLAS | What It Proves |
 |------|-------|----------------|
@@ -77,7 +112,10 @@ Discrete tests that exercise individual detection capabilities via direct event 
 | AT-FS-004 | AML.T0029 | Mass file creation DoS |
 | AT-FS-005 | AML.T0018 | Shell config persistence (.bashrc, .zshrc) |
 
-**Intelligence** — 5 files
+</details>
+
+<details>
+<summary><strong>Intelligence</strong> — 5 files</summary>
 
 | Test | ATLAS | What It Proves |
 |------|-------|----------------|
@@ -87,7 +125,10 @@ Discrete tests that exercise individual detection capabilities via direct event 
 | AT-INT-004 | AML.T0029 | Budget exhaustion handling |
 | AT-INT-005 | AML.T0015 | Baseline learning and reset |
 
-**Enforcement** — 5 files
+</details>
+
+<details>
+<summary><strong>Enforcement</strong> — 5 files</summary>
 
 | Test | ATLAS | What It Proves |
 |------|-------|----------------|
@@ -97,9 +138,13 @@ Discrete tests that exercise individual detection capabilities via direct event 
 | AT-ENF-004 | AML.TA0006 | SIGTERM/SIGKILL |
 | AT-ENF-005 | AML.TA0006 | SIGCONT resume |
 
+</details>
+
+---
+
 ### Integration Tests (`src/integration/`)
 
-Multi-step attack scenarios. Optionally validates against live [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent) agents.
+Multi-step attack scenarios using event injection. Optionally validates against live [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent) agents.
 
 | Test | ATLAS | Scenario |
 |------|-------|----------|
@@ -112,6 +157,8 @@ Multi-step attack scenarios. Optionally validates against live [DVAA](https://gi
 | INT-007 | AML.T0029 | Budget exhaustion via noise flood |
 | INT-008 | AML.TA0006 | Kill switch → process death → recovery |
 
+---
+
 ### Baseline Tests (`src/baseline/`)
 
 | Test | What It Proves |
@@ -120,11 +167,14 @@ Multi-step attack scenarios. Optionally validates against live [DVAA](https://gi
 | BL-002 | Controlled anomaly injection triggers detection |
 | BL-003 | Baseline persistence across restarts |
 
+---
+
 ### E2E Tests (`src/e2e/`)
 
 Real OS-level detection — no mocks, no event injection.
 
-**Live Monitors** (OS-level polling):
+<details>
+<summary><strong>Live Monitors</strong> — OS-level polling</summary>
 
 | Test | Latency | What It Proves |
 |------|---------|----------------|
@@ -132,13 +182,20 @@ Real OS-level detection — no mocks, no event injection.
 | E2E-002 | ~1000ms | ps polling detects child processes, suspicious binaries |
 | E2E-003 | ~1000ms | lsof detects outbound TCP (skips if unavailable) |
 
-**Interceptors** (application-level hooks):
+</details>
+
+<details>
+<summary><strong>Interceptors</strong> — application-level hooks</summary>
 
 | Test | Latency | What It Proves |
 |------|---------|----------------|
 | E2E-004 | <1ms | child_process.spawn/exec intercepted before execution |
 | E2E-005 | <1ms | net.Socket.connect intercepted before connection |
 | E2E-006 | <1ms | fs.writeFileSync/readFileSync intercepted before I/O |
+
+</details>
+
+---
 
 ## MITRE ATLAS Coverage
 
@@ -157,6 +214,8 @@ Real OS-level detection — no mocks, no event injection.
 | Prompt Injection | AML.T0051 | INT-003 |
 | Defense Response | AML.TA0006 | AT-ENF-001-005, AT-PROC-005, INT-008 |
 
+---
+
 ## Test Harness
 
 | File | Purpose |
@@ -167,6 +226,8 @@ Real OS-level detection — no mocks, no event injection.
 | `dvaa-client.ts` | HTTP client for DVAA agent endpoints |
 | `dvaa-manager.ts` | DVAA process lifecycle (spawn, health check, teardown) |
 | `metrics.ts` | Detection rate, false positive rate, P95 latency computation |
+
+---
 
 ## Known Detection Gaps
 
@@ -179,6 +240,23 @@ Tests document gaps so vendors can track what their product does and doesn't cat
 | No HTTP response/output monitoring | Architectural | INT-003 |
 | No cross-monitor event correlation | Architectural | INT-006 |
 
+---
+
 ## License
 
 Apache-2.0
+
+---
+
+## OpenA2A Ecosystem
+
+| Project | What it does |
+|---------|-------------|
+| [**OASB**](https://github.com/opena2a-org/oasb) | Open Agent Security Benchmark — 182 attack scenarios |
+| [**ARP**](https://github.com/opena2a-org/arp) | Runtime security monitoring for AI agents |
+| [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Security scanner — 147 checks, attack mode, auto-fix |
+| [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Identity and access management for AI agents |
+| [**Secretless AI**](https://github.com/opena2a-org/secretless-ai) | Keep credentials out of AI context windows |
+| [**DVAA**](https://github.com/opena2a-org/damn-vulnerable-ai-agent) | Deliberately vulnerable AI agents for security training |
+
+[Website](https://opena2a.org) · [OASB](https://oasb.ai) · [Discord](https://discord.gg/uRZa3KXgEn) · [Email](mailto:info@opena2a.org)
