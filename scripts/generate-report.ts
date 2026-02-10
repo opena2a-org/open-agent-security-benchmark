@@ -16,7 +16,7 @@ interface VitestResult {
   numTotalTests: number;
   numPassedTests: number;
   numFailedTests: number;
-  numSkippedTests: number;
+  numPendingTests: number;
   testResults: Array<{
     name: string;
     status: 'passed' | 'failed' | 'skipped';
@@ -107,7 +107,7 @@ function generateReport(resultsPath?: string): string {
     lines.push(`| Total Tests | ${results.numTotalTests} |`);
     lines.push(`| Passed | ${results.numPassedTests} |`);
     lines.push(`| Failed | ${results.numFailedTests} |`);
-    lines.push(`| Skipped | ${results.numSkippedTests} |`);
+    lines.push(`| Skipped | ${results.numPendingTests} |`);
     lines.push(`| Pass Rate | ${((results.numPassedTests / results.numTotalTests) * 100).toFixed(1)}% |`);
     lines.push('');
   }
