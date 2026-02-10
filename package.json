@@ -2,7 +2,9 @@
   "name": "@opena2a/oasb",
   "version": "0.1.0",
   "description": "Open Agent Security Benchmark — 182 attack scenarios mapped to MITRE ATLAS and OWASP Agentic Top 10",
-  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "src", "config", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -13,7 +15,7 @@
     "report": "npx tsx scripts/generate-report.ts"
   },
   "dependencies": {
-    "@opena2a/arp": "file:../arp"
+    "@opena2a/arp": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -22,6 +24,15 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "keywords": ["ai", "agent", "security", "benchmark", "oasb", "mitre-atlas", "evaluation", "runtime-protection", "opena2a"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opena2a-org/oasb.git"
+  },
+  "homepage": "https://oasb.ai/eval",
+  "bugs": {
+    "url": "https://github.com/opena2a-org/oasb/issues"
   },
   "author": "OpenA2A",
   "license": "Apache-2.0"
