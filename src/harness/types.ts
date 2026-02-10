@@ -54,4 +54,24 @@ export interface LabConfig {
   };
   /** Temp data dir (auto-created per test) */
   dataDir?: string;
+  /** Filesystem paths to watch (for real FilesystemMonitor) */
+  filesystemWatchPaths?: string[];
+  /** Filesystem allowed paths (for real FilesystemMonitor) */
+  filesystemAllowedPaths?: string[];
+  /** Network allowed hosts (for real NetworkMonitor) */
+  networkAllowedHosts?: string[];
+  /** Process monitor poll interval in ms */
+  processIntervalMs?: number;
+  /** Network monitor poll interval in ms */
+  networkIntervalMs?: number;
+  /** Application-level interceptors (zero-latency hooks) */
+  interceptors?: {
+    process?: boolean;
+    network?: boolean;
+    filesystem?: boolean;
+  };
+  /** Interceptor network allowed hosts */
+  interceptorNetworkAllowedHosts?: string[];
+  /** Interceptor filesystem allowed paths */
+  interceptorFilesystemAllowedPaths?: string[];
 }

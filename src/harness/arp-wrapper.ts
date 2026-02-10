@@ -30,14 +30,36 @@ export class ArpWrapper {
       declaredCapabilities: ['file read/write', 'HTTP requests'],
       dataDir: this._dataDir,
       monitors: {
-        process: { enabled: labConfig?.monitors?.process ?? false },
-        network: { enabled: labConfig?.monitors?.network ?? false },
-        filesystem: { enabled: labConfig?.monitors?.filesystem ?? false },
+        process: {
+          enabled: labConfig?.monitors?.process ?? false,
+          intervalMs: labConfig?.processIntervalMs,
+        },
+        network: {
+          enabled: labConfig?.monitors?.network ?? false,
+          intervalMs: labConfig?.networkIntervalMs,
+          allowedHosts: labConfig?.networkAllowedHosts,
+        },
+        filesystem: {
+          enabled: labConfig?.monitors?.filesystem ?? false,
+          watchPaths: labConfig?.filesystemWatchPaths,
+          allowedPaths: labConfig?.filesystemAllowedPaths,
+        },
       },
       rules: labConfig?.rules,
       intelligence: {
         enabled: labConfig?.intelligence?.enabled ?? false,
         budgetUsd: 0,
+      },
+      interceptors: {
+        process: { enabled: labConfig?.interceptors?.process ?? false },
+        network: {
+          enabled: labConfig?.interceptors?.network ?? false,
+          allowedHosts: labConfig?.interceptorNetworkAllowedHosts,
+        },
+        filesystem: {
+          enabled: labConfig?.interceptors?.filesystem ?? false,
+          allowedPaths: labConfig?.interceptorFilesystemAllowedPaths,
+        },
       },
     };
 
