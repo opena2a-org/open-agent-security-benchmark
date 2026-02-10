@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # arp-lab depends on file:../arp — clone and build ARP as sibling
+      - name: Clone ARP dependency
+        env:
+          GH_TOKEN: ${{ secrets.ARP_CLONE_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GH_TOKEN}@github.com/opena2a-org/arp.git ../arp
+          cd ../arp && npm install && npm run build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Test (atomic + integration + baseline)
+        run: npm test -- --exclude src/e2e/
+        timeout-minutes: 5
+
+      - name: Test (E2E — interceptors)
+        run: npx vitest run src/e2e/E2E-004 src/e2e/E2E-005 src/e2e/E2E-006
+        timeout-minutes: 2
+
+      - name: Test (E2E — live monitors)
+        run: npx vitest run src/e2e/E2E-001 src/e2e/E2E-002 src/e2e/E2E-003
+        timeout-minutes: 3

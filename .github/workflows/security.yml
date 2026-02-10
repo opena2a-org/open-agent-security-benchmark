@@ -1,0 +1,82 @@
+name: Security Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar xz
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Run gitleaks (PR — scan new commits)
+        if: github.event_name == 'pull_request'
+        run: |
+          gitleaks detect --config .gitleaks.toml --source . \
+            --log-opts "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" \
+            -v --redact
+
+      - name: Run gitleaks (push/schedule — scan last commit)
+        if: github.event_name != 'pull_request'
+        run: gitleaks detect --config .gitleaks.toml --source . --log-opts "HEAD~1..HEAD" -v --redact
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 0
+
+      - name: npm audit
+        run: |
+          npm install --ignore-scripts 2>/dev/null || true
+          npm audit --audit-level=high || true
+
+  license-check:
+    name: License Compliance
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check npm licenses
+        run: |
+          npm install --ignore-scripts 2>/dev/null || true
+          npx license-checker --failOn "GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0;SSPL-1.0" --summary

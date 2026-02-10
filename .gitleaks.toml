@@ -1,0 +1,38 @@
+title = "ARP Lab Secret Detection Rules"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "api-key-generic"
+description = "Generic API key assignment"
+regex = '''(?i)(api[_-]?key|apikey|secret[_-]?key)\s*[:=]\s*["'][A-Za-z0-9_\-]{20,}["']'''
+tags = ["api", "key"]
+
+[[rules]]
+id = "pem-private-key"
+description = "PEM-encoded private key"
+regex = '''-----BEGIN\s*(RSA|EC|OPENSSH|DSA|ED25519|ENCRYPTED)?\s*PRIVATE KEY-----'''
+tags = ["crypto", "key"]
+
+[[rules]]
+id = "database-password"
+description = "Database connection with password"
+regex = '''(?i)(postgres|mysql|mongodb)://[^:]+:[^@\s]{8,}@'''
+tags = ["database", "credential"]
+
+[allowlist]
+description = "Global allowlist — test fixtures contain intentional detection patterns"
+paths = [
+  '''(.*/)?\.test\.(ts|js)$''',
+  '''(.*/)?test/.*$''',
+  '''(.*/)?tests/.*$''',
+  '''(.*/)?fixtures/.*$''',
+  '''(.*/)?src/atomic/.*$''',
+  '''(.*/)?src/integration/.*$''',
+  '''(.*/)?src/baseline/.*$''',
+  '''(.*/)?src/e2e/.*$''',
+  '''(.*/)?src/harness/.*$''',
+  '''\.gitleaks\.toml$''',
+  '''package-lock\.json$''',
+]
