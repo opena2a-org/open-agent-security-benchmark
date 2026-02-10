@@ -13,7 +13,7 @@
     "report": "npx tsx scripts/generate-report.ts"
   },
   "dependencies": {
-    "@opena2a/arp": "file:../opena2a-arp"
+    "@opena2a/arp": "file:../arp"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
