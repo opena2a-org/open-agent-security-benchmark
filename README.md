@@ -1,3 +1,5 @@
+> **[OpenA2A](https://opena2a.org)**: [AIM](https://opena2a.org/docs) · [HackMyAgent](https://hackmyagent.com) · [OASB](https://oasb.ai) · [ARP](https://github.com/opena2a-org/arp) · [Secretless](https://github.com/opena2a-org/secretless-ai) · [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent)
+
 # OASB — Open Agent Security Benchmark
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -275,13 +277,11 @@ Apache-2.0
 
 ## OpenA2A Ecosystem
 
-| Project | What it does |
-|---------|-------------|
-| [**OASB**](https://github.com/opena2a-org/oasb) | Evaluate security products — 182 attack scenarios, MITRE ATLAS mapped |
-| [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Pentest AI agents — 147 checks, 55 attack payloads, auto-fix |
-| [**ARP**](https://github.com/opena2a-org/arp) | Runtime security monitoring for AI agents |
-| [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Identity and access management for AI agents |
-| [**Secretless AI**](https://github.com/opena2a-org/secretless-ai) | Keep credentials out of AI context windows |
-| [**DVAA**](https://github.com/opena2a-org/damn-vulnerable-ai-agent) | Deliberately vulnerable AI agents for security training |
-
-[Website](https://opena2a.org) · [OASB](https://oasb.ai) · [Discord](https://discord.gg/uRZa3KXgEn) · [Email](mailto:info@opena2a.org)
+| Project | Description | Install |
+|---------|-------------|---------|
+| [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Agent Identity Management -- identity and access control for AI agents | `pip install aim-sdk` |
+| [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Security scanner -- 147 checks, attack mode, auto-fix | `npx hackmyagent secure` |
+| [**OASB**](https://github.com/opena2a-org/oasb) | Open Agent Security Benchmark -- 182 attack scenarios | `npm install @opena2a/oasb` |
+| [**ARP**](https://github.com/opena2a-org/arp) | Agent Runtime Protection -- process, network, filesystem monitoring | `npm install @opena2a/arp` |
+| [**Secretless AI**](https://github.com/opena2a-org/secretless-ai) | Keep credentials out of AI context windows | `npx secretless-ai init` |
+| [**DVAA**](https://github.com/opena2a-org/damn-vulnerable-ai-agent) | Damn Vulnerable AI Agent -- security training and red-teaming | `docker pull opena2a/dvaa` |
