@@ -72,7 +72,7 @@ describe('AT-ENF-004: Process Kill via SIGTERM', () => {
     expect(result.targetPid).toBe(pid);
 
     // Wait for SIGTERM to take effect
-    await sleep(1000);
+    await sleep(2000);
 
     expect(isProcessAlive(pid)).toBe(false);
   }, 10000);

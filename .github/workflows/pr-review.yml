@@ -131,10 +131,10 @@ jobs:
             }' | curl -s -X POST "https://api.anthropic.com/v1/messages" \
               -H "Content-Type: application/json" \
               -H "x-api-key: ${ANTHROPIC_API_KEY}" \
-              -H "anthropic-version: 2025-04-15" \
+              -H "anthropic-version: 2023-06-01" \
               -d @-)
 
-          REVIEW_TEXT=$(echo "$RESPONSE" | jq -r '[.content[] | select(.type == "text") | .text] | join("\n") // empty')
+          REVIEW_TEXT=$(echo "$RESPONSE" | jq -r '[(.content // [])[] | select(.type == "text") | .text] | join("\n") // empty' 2>/dev/null || echo "")
 
           if [ -z "$REVIEW_TEXT" ]; then
             RESPONSE=$(jq -n \
