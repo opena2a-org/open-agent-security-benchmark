@@ -1,7 +1,7 @@
 {
-  "name": "@opena2a/arp-lab",
+  "name": "@opena2a/oasb",
   "version": "0.1.0",
-  "description": "Comprehensive runtime security testing lab for ARP (Agent Runtime Protection)",
+  "description": "Open Agent Security Benchmark — 182 attack scenarios mapped to MITRE ATLAS and OWASP Agentic Top 10",
   "private": true,
   "scripts": {
     "build": "tsc",

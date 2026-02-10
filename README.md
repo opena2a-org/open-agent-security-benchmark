@@ -1,36 +1,42 @@
-# ARP Lab — Security Testing for Agent Runtime Protection
+# OASB — Open Agent Security Benchmark
 
-Comprehensive test suite that validates [ARP](https://github.com/opena2a-org/arp)'s detection capabilities against realistic attack scenarios. 182 tests across 42 files, mapped to MITRE ATLAS and OWASP Agentic Top 10.
+Standardized attack scenarios for evaluating AI agent runtime security products. 182 tests across 42 files, mapped to MITRE ATLAS and OWASP Agentic Top 10.
 
-## Test Results
+OASB answers one question: **can your security product actually detect attacks against AI agents?**
 
-| Category | Files | Tests | Status |
-|----------|-------|-------|--------|
-| Atomic (unit-level) | 25 | 103 | All passing |
-| Integration | 8 | 33 | All passing |
-| Baseline | 3 | 13 | All passing |
-| E2E — Live Monitors | 3 | 9 | All passing |
-| E2E — Interceptors | 3 | 14 | All passing |
-| **Total** | **42** | **182** | **100% pass rate** |
+## What Gets Tested
 
-## Setup
+| Category | Tests | What It Evaluates |
+|----------|-------|-------------------|
+| Process detection | 25 | Child process spawns, suspicious binaries, privilege escalation, CPU anomalies |
+| Network detection | 20 | Outbound connections, suspicious hosts, exfiltration, subdomain bypass |
+| Filesystem detection | 28 | Sensitive path access, credential files, dotfile persistence, mass file DoS |
+| Intelligence layers | 21 | Rule matching, anomaly scoring, LLM escalation, budget exhaustion |
+| Enforcement actions | 18 | Logging, alerting, process pause (SIGSTOP), kill (SIGTERM/SIGKILL), resume |
+| Multi-step attacks | 33 | Data exfiltration chains, MCP tool abuse, prompt injection, A2A trust exploitation |
+| Baseline behavior | 13 | False positive rates, anomaly injection, baseline persistence |
+| Real OS detection | 14 | Live filesystem watches, process polling, network monitoring |
+| Application-level hooks | 14 | Pre-execution interception of spawn, connect, read/write |
+| **Total** | **182** | **10 MITRE ATLAS techniques** |
 
-Requires [ARP](https://github.com/opena2a-org/arp) cloned as a sibling directory.
+## Quick Start
+
+Currently ships with [ARP](https://github.com/opena2a-org/arp) as the reference adapter. Vendor adapter interface coming soon.
 
 ```bash
 git clone https://github.com/opena2a-org/arp.git
-git clone https://github.com/opena2a-org/arp-lab.git
+git clone https://github.com/opena2a-org/oasb.git
 
 cd arp && npm install && npm run build && cd ..
-cd arp-lab && npm install
+cd oasb && npm install
 ```
 
-## Running Tests
+### Run the Benchmark
 
 ```bash
-npm test                    # All 182 tests
+npm test                    # Full benchmark (182 tests)
 npm run test:atomic         # 25 atomic tests (no external deps)
-npm run test:integration    # 8 integration tests
+npm run test:integration    # 8 integration scenarios
 npm run test:baseline       # 3 baseline tests
 npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 ```
@@ -39,7 +45,7 @@ npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 
 ### Atomic Tests (`src/atomic/`)
 
-Discrete unit tests that exercise individual ARP capabilities via direct event injection. No external dependencies.
+Discrete tests that exercise individual detection capabilities via direct event injection. No external dependencies required.
 
 **Process Detection** — 5 files
 
@@ -75,9 +81,9 @@ Discrete unit tests that exercise individual ARP capabilities via direct event i
 
 | Test | ATLAS | What It Proves |
 |------|-------|----------------|
-| AT-INT-001 | AML.T0054 | L0 rule matching and enforcement triggers |
-| AT-INT-002 | AML.T0015 | L1 z-score anomaly scoring |
-| AT-INT-003 | AML.T0054 | L2 LLM confirmation deferral |
+| AT-INT-001 | AML.T0054 | Rule-based classification and enforcement |
+| AT-INT-002 | AML.T0015 | Statistical anomaly scoring (z-score) |
+| AT-INT-003 | AML.T0054 | LLM-assisted assessment escalation |
 | AT-INT-004 | AML.T0029 | Budget exhaustion handling |
 | AT-INT-005 | AML.T0015 | Baseline learning and reset |
 
@@ -93,7 +99,7 @@ Discrete unit tests that exercise individual ARP capabilities via direct event i
 
 ### Integration Tests (`src/integration/`)
 
-Multi-step attack scenarios using event injection. Optionally validates against live [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent) agents.
+Multi-step attack scenarios. Optionally validates against live [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent) agents.
 
 | Test | ATLAS | Scenario |
 |------|-------|----------|
@@ -112,7 +118,7 @@ Multi-step attack scenarios using event injection. Optionally validates against 
 |------|----------------|
 | BL-001 | Zero false positives from normal agent activity |
 | BL-002 | Controlled anomaly injection triggers detection |
-| BL-003 | Baseline persistence gap (documented limitation) |
+| BL-003 | Baseline persistence across restarts |
 
 ### E2E Tests (`src/e2e/`)
 
@@ -134,17 +140,6 @@ Real OS-level detection — no mocks, no event injection.
 | E2E-005 | <1ms | net.Socket.connect intercepted before connection |
 | E2E-006 | <1ms | fs.writeFileSync/readFileSync intercepted before I/O |
 
-## Test Harness
-
-| File | Purpose |
-|------|---------|
-| `arp-wrapper.ts` | Wraps ARP with temp dataDir, event collection, injection helpers |
-| `event-collector.ts` | Captures events with async `waitForEvent(predicate, timeout)` |
-| `mock-llm-adapter.ts` | Deterministic LLM for L2 testing (pattern-based responses) |
-| `dvaa-client.ts` | HTTP client for DVAA agent endpoints |
-| `dvaa-manager.ts` | DVAA process lifecycle (spawn, health check, teardown) |
-| `metrics.ts` | Detection rate, false positive rate, P95 latency computation |
-
 ## MITRE ATLAS Coverage
 
 10 unique techniques across 42 test files:
@@ -162,7 +157,20 @@ Real OS-level detection — no mocks, no event injection.
 | Prompt Injection | AML.T0051 | INT-003 |
 | Defense Response | AML.TA0006 | AT-ENF-001-005, AT-PROC-005, INT-008 |
 
-## Known Gaps (Documented by Tests)
+## Test Harness
+
+| File | Purpose |
+|------|---------|
+| `arp-wrapper.ts` | Reference adapter — wraps ARP with temp dataDir, event collection, injection helpers |
+| `event-collector.ts` | Captures events with async `waitForEvent(predicate, timeout)` |
+| `mock-llm-adapter.ts` | Deterministic LLM for intelligence layer testing (pattern-based responses) |
+| `dvaa-client.ts` | HTTP client for DVAA agent endpoints |
+| `dvaa-manager.ts` | DVAA process lifecycle (spawn, health check, teardown) |
+| `metrics.ts` | Detection rate, false positive rate, P95 latency computation |
+
+## Known Detection Gaps
+
+Tests document gaps so vendors can track what their product does and doesn't catch.
 
 | Gap | Severity | Test |
 |-----|----------|------|
