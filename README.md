@@ -3,14 +3,24 @@
 # OASB — Open Agent Security Benchmark
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Tests](https://img.shields.io/badge/tests-182%20passing-brightgreen)](https://github.com/opena2a-org/oasb)
+[![Tests](https://img.shields.io/badge/tests-222%20passing-brightgreen)](https://github.com/opena2a-org/oasb)
 [![MITRE ATLAS](https://img.shields.io/badge/MITRE%20ATLAS-10%20techniques-teal)](https://atlas.mitre.org/)
 
 **MITRE ATT&CK Evaluations, but for AI agent security products.**
 
-182 standardized attack scenarios that evaluate whether a runtime security product can detect and respond to threats against AI agents. Each test is mapped to MITRE ATLAS and OWASP Agentic Top 10. Plug in your product, run the suite, get a detection coverage scorecard.
+222 standardized attack scenarios that evaluate whether a runtime security product can detect and respond to threats against AI agents. Each test is mapped to MITRE ATLAS and OWASP Agentic Top 10. Plug in your product, run the suite, get a detection coverage scorecard.
 
 [OASB Website](https://oasb.ai) | [OpenA2A](https://opena2a.org) | [MITRE ATLAS Coverage](#mitre-atlas-coverage) | [ARP (Reference Adapter)](https://github.com/opena2a-org/arp)
+
+---
+
+## Updates
+
+| Date | Change |
+|------|--------|
+| 2026-02-19 | Added 40 AI-layer test scenarios (AT-AI-001 through AT-AI-005) for prompt, MCP, and A2A scanning via ARP v0.2.0. Total tests: 222. |
+| 2026-02-18 | Added integration tests for DVAA v0.4.0 MCP JSON-RPC and A2A endpoints. |
+| 2026-02-09 | Initial release -- 182 attack scenarios across 10 MITRE ATLAS techniques. |
 
 ---
 
@@ -36,7 +46,7 @@ Use both together: **HackMyAgent** finds vulnerabilities in your agent, **OASB**
 - [Quick Start](#quick-start)
 - [What Gets Tested](#what-gets-tested)
 - [Test Categories](#test-categories)
-  - [Atomic Tests](#atomic-tests-srcatomic) — 25 discrete detection tests
+  - [Atomic Tests](#atomic-tests-srcatomic) — 65 discrete detection tests (OS-level + AI-layer)
   - [Integration Tests](#integration-tests-srcintegration) — 8 multi-step attack chains
   - [Baseline Tests](#baseline-tests-srcbaseline) — 3 false positive validations
   - [E2E Tests](#e2e-tests-srce2e) — 6 real OS-level detection tests
@@ -49,7 +59,7 @@ Use both together: **HackMyAgent** finds vulnerabilities in your agent, **OASB**
 
 ## Quick Start
 
-Currently ships with [ARP](https://github.com/opena2a-org/arp) as the reference adapter. Vendor adapter interface coming soon — implement the adapter for your product and run the same 182 tests.
+Currently ships with [ARP](https://github.com/opena2a-org/arp) as the reference adapter. Vendor adapter interface coming soon — implement the adapter for your product and run the same 222 tests.
 
 ```bash
 git clone https://github.com/opena2a-org/arp.git
@@ -62,8 +72,8 @@ cd oasb && npm install
 ### Run the Evaluation
 
 ```bash
-npm test                    # Full evaluation (182 tests)
-npm run test:atomic         # 25 atomic tests (no external deps)
+npm test                    # Full evaluation (222 tests)
+npm run test:atomic         # 65 atomic tests (no external deps)
 npm run test:integration    # 8 integration scenarios
 npm run test:baseline       # 3 baseline tests
 npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
@@ -86,7 +96,8 @@ Each test simulates a specific attack technique and checks whether the security 
 | Baseline behavior | 13 | False positive rates, anomaly injection, baseline persistence |
 | Real OS detection | 14 | Live filesystem watches, process polling, network monitoring |
 | Application-level hooks | 14 | Pre-execution interception of spawn, connect, read/write |
-| **Total** | **182** | **10 MITRE ATLAS techniques** |
+| AI-layer scanning | 40 | Prompt injection/output, MCP tool call validation, A2A message scanning, pattern coverage |
+| **Total** | **222** | **10 MITRE ATLAS techniques** |
 
 ---
 
@@ -95,6 +106,19 @@ Each test simulates a specific attack technique and checks whether the security 
 ### Atomic Tests (`src/atomic/`)
 
 Discrete tests that exercise individual detection capabilities. Each test injects a single attack event and verifies the product detects it with the correct classification and severity.
+
+<details>
+<summary><strong>AI-Layer Scanning</strong> — 5 files (40 tests)</summary>
+
+| Test | What the Product Should Detect |
+|------|-------------------------------|
+| AT-AI-001 | Prompt input scanning — PI, JB, DE, CM pattern detection (11 tests) |
+| AT-AI-002 | Prompt output scanning — OL pattern detection, data leak prevention (6 tests) |
+| AT-AI-003 | MCP tool call scanning — path traversal, command injection, SSRF, allowlist (11 tests) |
+| AT-AI-004 | A2A message scanning — identity spoofing, delegation abuse, trust validation (7 tests) |
+| AT-AI-005 | Pattern coverage — all 19 patterns detect known payloads, no false positives (5 tests) |
+
+</details>
 
 <details>
 <summary><strong>Process Detection</strong> — 5 files</summary>
@@ -222,7 +246,7 @@ Real OS-level detection — no mocks, no event injection. These tests spawn real
 
 ## MITRE ATLAS Coverage
 
-10 unique techniques across 42 test files:
+10 unique techniques across 47 test files:
 
 | Technique | ID | Tests |
 |-----------|----|-------|
