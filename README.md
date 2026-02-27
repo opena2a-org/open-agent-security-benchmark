@@ -10,7 +10,7 @@
 
 222 standardized attack scenarios that evaluate whether a runtime security product can detect and respond to threats against AI agents. Each test is mapped to MITRE ATLAS and OWASP Agentic Top 10. Plug in your product, run the suite, get a detection coverage scorecard.
 
-[OASB Website](https://oasb.ai) | [OpenA2A](https://opena2a.org) | [MITRE ATLAS Coverage](#mitre-atlas-coverage) | [ARP (Reference Adapter)](https://github.com/opena2a-org/arp)
+[OASB Website](https://oasb.ai) | [MITRE ATLAS Coverage](#mitre-atlas-coverage) | [ARP (Reference Adapter)](https://github.com/opena2a-org/arp)
 
 ---
 
