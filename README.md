@@ -44,6 +44,7 @@ Use both together: **HackMyAgent** finds vulnerabilities in your agent, **OASB**
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Usage via OpenA2A CLI](#usage-via-opena2a-cli)
 - [What Gets Tested](#what-gets-tested)
 - [Test Categories](#test-categories)
   - [Atomic Tests](#atomic-tests-srcatomic) — 65 discrete detection tests (OS-level + AI-layer)
@@ -78,6 +79,44 @@ npm run test:integration    # 8 integration scenarios
 npm run test:baseline       # 3 baseline tests
 npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 ```
+
+---
+
+## Usage via OpenA2A CLI
+
+OASB is available as a built-in adapter in the [OpenA2A CLI](https://github.com/opena2a-org/opena2a) via the `benchmark` command. The CLI delegates to the `@opena2a/oasb` package using an import adapter, so no separate installation is needed if you already have the CLI installed.
+
+### Run the full benchmark suite
+
+```bash
+opena2a benchmark run
+```
+
+Executes all 222 test scenarios (atomic, integration, baseline, and E2E) and produces a detection coverage scorecard.
+
+### Run a specific MITRE ATLAS technique
+
+```bash
+opena2a benchmark run --technique T0015
+```
+
+Filters the benchmark to a single MITRE ATLAS technique ID (e.g., `T0015` for Evasion). Useful for targeted evaluation of a specific detection capability.
+
+### Generate machine-readable output for CI
+
+```bash
+opena2a benchmark run --format json
+```
+
+Outputs the compliance score and per-technique detection rates as JSON. Integrate this into CI pipelines to enforce minimum detection thresholds on every build.
+
+### Combining flags
+
+```bash
+opena2a benchmark run --technique T0057 --format json
+```
+
+Flags can be combined to run a single technique and produce JSON output for automated processing.
 
 ---
 
@@ -305,7 +344,6 @@ Apache-2.0
 |---------|-------------|---------|
 | [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Agent Identity Management -- identity and access control for AI agents | `pip install aim-sdk` |
 | [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Security scanner -- 147 checks, attack mode, auto-fix | `npx hackmyagent secure` |
-| [**OASB**](https://github.com/opena2a-org/oasb) | Open Agent Security Benchmark -- 182 attack scenarios | `npm install @opena2a/oasb` |
 | [**ARP**](https://github.com/opena2a-org/arp) | Agent Runtime Protection -- process, network, filesystem monitoring | `npm install @opena2a/arp` |
 | [**Secretless AI**](https://github.com/opena2a-org/secretless-ai) | Keep credentials out of AI context windows | `npx secretless-ai init` |
 | [**DVAA**](https://github.com/opena2a-org/damn-vulnerable-ai-agent) | Damn Vulnerable AI Agent -- security training and red-teaming | `docker pull opena2a/dvaa` |
