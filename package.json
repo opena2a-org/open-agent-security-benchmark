@@ -1,5 +1,5 @@
 {
-  "name": "oasb",
+  "name": "@opena2a/oasb",
   "version": "0.3.0",
   "description": "Open Agent Security Benchmark — 222 attack scenarios mapped to MITRE ATLAS and OWASP Agentic Top 10",
   "main": "dist/index.js",
