@@ -1,4 +1,31 @@
-import type { ARPEvent, EnforcementResult } from '@opena2a/arp';
+// Re-export OASB-native types from the adapter interface
+// Tests should import from here or from './adapter'
+export type {
+  SecurityEvent,
+  EnforcementResult,
+  AlertRule,
+  AlertCondition,
+  EventCategory,
+  EventSeverity,
+  MonitorSource,
+  EnforcementAction,
+  ScanResult,
+  ScanMatch,
+  ThreatPattern,
+  BudgetStatus,
+  LLMAdapter,
+  LLMResponse,
+  LabConfig,
+  SecurityProductAdapter,
+  PromptScanner,
+  MCPScanner,
+  A2AScanner,
+  PatternScanner,
+  BudgetManager,
+  AnomalyScorer,
+  EventEngine,
+  EnforcementEngine,
+} from './adapter';
 
 /** Annotation metadata for test cases */
 export interface TestAnnotation {
@@ -8,7 +35,7 @@ export interface TestAnnotation {
   atlasId?: string;
   /** OWASP Agentic Top 10 category */
   owaspId?: string;
-  /** Whether ARP should detect this */
+  /** Whether the product should detect this */
   expectedDetection: boolean;
   /** Expected minimum severity if detected */
   expectedSeverity?: 'info' | 'low' | 'medium' | 'high' | 'critical';
@@ -22,8 +49,8 @@ export interface TestResult {
   annotation: TestAnnotation;
   detected: boolean;
   detectionTimeMs?: number;
-  events: ARPEvent[];
-  enforcements: EnforcementResult[];
+  events: import('./adapter').SecurityEvent[];
+  enforcements: import('./adapter').EnforcementResult[];
 }
 
 /** Suite-level metrics */
@@ -39,39 +66,4 @@ export interface SuiteMetrics {
   falsePositiveRate: number;
   meanDetectionTimeMs: number;
   p95DetectionTimeMs: number;
-}
-
-/** ARP wrapper configuration for tests */
-export interface LabConfig {
-  monitors?: {
-    process?: boolean;
-    network?: boolean;
-    filesystem?: boolean;
-  };
-  rules?: import('@opena2a/arp').AlertRule[];
-  intelligence?: {
-    enabled?: boolean;
-  };
-  /** Temp data dir (auto-created per test) */
-  dataDir?: string;
-  /** Filesystem paths to watch (for real FilesystemMonitor) */
-  filesystemWatchPaths?: string[];
-  /** Filesystem allowed paths (for real FilesystemMonitor) */
-  filesystemAllowedPaths?: string[];
-  /** Network allowed hosts (for real NetworkMonitor) */
-  networkAllowedHosts?: string[];
-  /** Process monitor poll interval in ms */
-  processIntervalMs?: number;
-  /** Network monitor poll interval in ms */
-  networkIntervalMs?: number;
-  /** Application-level interceptors (zero-latency hooks) */
-  interceptors?: {
-    process?: boolean;
-    network?: boolean;
-    filesystem?: boolean;
-  };
-  /** Interceptor network allowed hosts */
-  interceptorNetworkAllowedHosts?: string[];
-  /** Interceptor filesystem allowed paths */
-  interceptorFilesystemAllowedPaths?: string[];
 }

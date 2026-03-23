@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ArpWrapper } from '../../harness/arp-wrapper';
-import type { ARPEvent, EnforcementResult } from '@opena2a/arp';
+import type { SecurityEvent, EnforcementResult } from '../../harness/adapter';
 
 describe('AT-ENF-002: Alert Callback Execution', () => {
   let arp: ArpWrapper;
@@ -26,7 +26,7 @@ describe('AT-ENF-002: Alert Callback Execution', () => {
     const enforcement = arp.getEnforcement();
     enforcement.setAlertCallback(callbackFn);
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-002-1',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -52,7 +52,7 @@ describe('AT-ENF-002: Alert Callback Execution', () => {
     const enforcement = arp.getEnforcement();
     // No callback set
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-002-2',
       timestamp: new Date().toISOString(),
       source: 'network',
@@ -75,7 +75,7 @@ describe('AT-ENF-002: Alert Callback Execution', () => {
       throw new Error('Callback failure');
     });
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-002-3',
       timestamp: new Date().toISOString(),
       source: 'filesystem',
@@ -101,7 +101,7 @@ describe('AT-ENF-002: Alert Callback Execution', () => {
     enforcement.setAlertCallback(firstCallback);
     enforcement.setAlertCallback(secondCallback);
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-002-4',
       timestamp: new Date().toISOString(),
       source: 'process',

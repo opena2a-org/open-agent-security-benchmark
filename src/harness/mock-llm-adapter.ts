@@ -1,4 +1,4 @@
-import type { LLMAdapter, LLMResponse } from '@opena2a/arp';
+import type { LLMAdapter, LLMResponse } from './adapter';
 
 interface MockCall {
   prompt: string;

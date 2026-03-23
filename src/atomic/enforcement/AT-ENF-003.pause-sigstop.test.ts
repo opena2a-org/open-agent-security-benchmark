@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'child_process';
 import { ArpWrapper } from '../../harness/arp-wrapper';
-import type { ARPEvent } from '@opena2a/arp';
+import type { SecurityEvent } from '../../harness/adapter';
 
 describe('AT-ENF-003: Process Pause via SIGSTOP', () => {
   let arp: ArpWrapper;
@@ -41,7 +41,7 @@ describe('AT-ENF-003: Process Pause via SIGSTOP', () => {
     const pid = child.pid!;
     expect(pid).toBeDefined();
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-003-1',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -62,7 +62,7 @@ describe('AT-ENF-003: Process Pause via SIGSTOP', () => {
   }, 10000);
 
   it('should fail to pause when no PID is provided', async () => {
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-003-2',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -83,7 +83,7 @@ describe('AT-ENF-003: Process Pause via SIGSTOP', () => {
 
   it('should fail to pause a non-existent process', async () => {
     const fakePid = 999999;
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-003-3',
       timestamp: new Date().toISOString(),
       source: 'process',

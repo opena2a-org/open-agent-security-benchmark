@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ArpWrapper } from '../harness/arp-wrapper';
-import type { AlertRule } from '@opena2a/arp';
+import type { AlertRule } from '../harness/adapter';
 
 describe('INT-005: Baseline Learning Then Attack Burst', () => {
   let arp: ArpWrapper;

@@ -8,11 +8,11 @@
 // timing sensitivity in integration tests.
 
 import { describe, it, expect } from 'vitest';
-import { AnomalyDetector } from '@opena2a/arp';
-import type { ARPEvent } from '@opena2a/arp';
+import { createAdapter } from '../../harness/create-adapter';
+import type { SecurityEvent, AnomalyScorer } from '../../harness/adapter';
 
-/** Create a minimal ARPEvent for anomaly detector testing. */
-function makeEvent(source: ARPEvent['source'], overrides?: Partial<ARPEvent>): ARPEvent {
+/** Create a minimal SecurityEvent for anomaly detector testing. */
+function makeEvent(source: SecurityEvent['source'], overrides?: Partial<SecurityEvent>): SecurityEvent {
   return {
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
@@ -27,8 +27,10 @@ function makeEvent(source: ARPEvent['source'], overrides?: Partial<ARPEvent>): A
 }
 
 describe('AT-INT-002: L1 Statistical Anomaly Scoring', () => {
+  const adapter = createAdapter();
+
   it('should return 0 when insufficient data points exist', () => {
-    const detector = new AnomalyDetector();
+    const detector = adapter.createAnomalyScorer();
     const event = makeEvent('process');
 
     // Without any baseline data, score should be 0 (not enough data)
@@ -37,7 +39,7 @@ describe('AT-INT-002: L1 Statistical Anomaly Scoring', () => {
   });
 
   it('should build a baseline after recording sufficient events', () => {
-    const detector = new AnomalyDetector();
+    const detector = adapter.createAnomalyScorer();
 
     // Record 40 events to build a baseline (minDataPoints is 30)
     // All events land in the same minute bucket, so we need to simulate
@@ -58,7 +60,7 @@ describe('AT-INT-002: L1 Statistical Anomaly Scoring', () => {
   });
 
   it('should return low score for normal frequency patterns', () => {
-    const detector = new AnomalyDetector();
+    const detector = adapter.createAnomalyScorer();
 
     // Record enough events to exceed minDataPoints
     // All in the same minute bucket, building a stable baseline
@@ -73,7 +75,7 @@ describe('AT-INT-002: L1 Statistical Anomaly Scoring', () => {
   });
 
   it('should clear baseline data on reset', () => {
-    const detector = new AnomalyDetector();
+    const detector = adapter.createAnomalyScorer();
 
     // Build up some baseline
     for (let i = 0; i < 40; i++) {

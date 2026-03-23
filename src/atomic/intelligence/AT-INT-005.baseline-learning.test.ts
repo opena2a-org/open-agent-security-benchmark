@@ -8,11 +8,11 @@
 // so the detector returns to its initial state.
 
 import { describe, it, expect } from 'vitest';
-import { AnomalyDetector } from '@opena2a/arp';
-import type { ARPEvent } from '@opena2a/arp';
+import { createAdapter } from '../../harness/create-adapter';
+import type { SecurityEvent, AnomalyScorer } from '../../harness/adapter';
 
-/** Create a minimal ARPEvent for the given source. */
-function makeEvent(source: ARPEvent['source']): ARPEvent {
+/** Create a minimal SecurityEvent for the given source. */
+function makeEvent(source: SecurityEvent['source']): SecurityEvent {
   return {
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
@@ -27,7 +27,7 @@ function makeEvent(source: ARPEvent['source']): ARPEvent {
 
 describe('AT-INT-005: Baseline Learning', () => {
   it('should establish a baseline after recording many events', () => {
-    const detector = new AnomalyDetector();
+    const detector = createAdapter().createAnomalyScorer();
 
     // Feed 50 observations to build a solid baseline for the 'network' source
     for (let i = 0; i < 50; i++) {
@@ -41,7 +41,7 @@ describe('AT-INT-005: Baseline Learning', () => {
   });
 
   it('should return low anomaly score for events matching the baseline', () => {
-    const detector = new AnomalyDetector();
+    const detector = createAdapter().createAnomalyScorer();
 
     // Build baseline with consistent frequency
     for (let i = 0; i < 50; i++) {
@@ -54,7 +54,7 @@ describe('AT-INT-005: Baseline Learning', () => {
   });
 
   it('should track baselines independently per source', () => {
-    const detector = new AnomalyDetector();
+    const detector = createAdapter().createAnomalyScorer();
 
     // Build baseline for 'network' only
     for (let i = 0; i < 50; i++) {
@@ -71,7 +71,7 @@ describe('AT-INT-005: Baseline Learning', () => {
   });
 
   it('should clear all baselines on reset and return score 0', () => {
-    const detector = new AnomalyDetector();
+    const detector = createAdapter().createAnomalyScorer();
 
     // Build baselines for two sources
     for (let i = 0; i < 50; i++) {
@@ -94,7 +94,7 @@ describe('AT-INT-005: Baseline Learning', () => {
   });
 
   it('should differentiate between sources with different baselines', () => {
-    const detector = new AnomalyDetector();
+    const detector = createAdapter().createAnomalyScorer();
 
     // Build baseline for 'network' with many events
     for (let i = 0; i < 50; i++) {

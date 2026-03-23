@@ -1,0 +1,222 @@
+/**
+ * OASB Security Product Adapter Interface
+ *
+ * Implement this interface to evaluate your security product against OASB.
+ * The reference implementation (ARP adapter) is in arp-wrapper.ts.
+ *
+ * @example
+ *   // Vendor implements the adapter for their product:
+ *   class MyProductAdapter implements SecurityProductAdapter { ... }
+ *
+ *   // OASB tests use the adapter, not your product directly:
+ *   const adapter = createAdapter(); // returns configured adapter
+ *   await adapter.start();
+ *   await adapter.injectEvent({ ... });
+ *   const threats = adapter.getEventsByCategory('threat');
+ */
+
+// ─── Core Event Types ───────────────────────────────────────────────
+
+export type EventCategory = 'normal' | 'activity' | 'threat' | 'violation';
+export type EventSeverity = 'info' | 'low' | 'medium' | 'high' | 'critical';
+export type MonitorSource = 'process' | 'network' | 'filesystem' | 'prompt' | 'mcp-protocol' | 'a2a-protocol' | string;
+export type EnforcementAction = 'log' | 'alert' | 'pause' | 'kill' | 'resume';
+
+export interface SecurityEvent {
+  id?: string;
+  timestamp?: string;
+  source: MonitorSource;
+  category: EventCategory;
+  severity: EventSeverity;
+  description: string;
+  data?: Record<string, unknown>;
+  classifiedBy?: string;
+}
+
+export interface EnforcementResult {
+  action: EnforcementAction;
+  success: boolean;
+  reason: string;
+  event: SecurityEvent;
+  pid?: number;
+}
+
+export interface AlertRule {
+  name: string;
+  condition: AlertCondition;
+  action: EnforcementAction;
+}
+
+export interface AlertCondition {
+  source?: MonitorSource;
+  category?: EventCategory;
+  minSeverity?: EventSeverity;
+  descriptionContains?: string;
+}
+
+// ─── Scanner Types ──────────────────────────────────────────────────
+
+export interface ScanResult {
+  detected: boolean;
+  matches: ScanMatch[];
+  truncated?: boolean;
+}
+
+export interface ScanMatch {
+  pattern: ThreatPattern;
+  matchedText: string;
+}
+
+export interface ThreatPattern {
+  id: string;
+  category: string;
+  description: string;
+  pattern: RegExp;
+  severity: 'medium' | 'high' | 'critical';
+}
+
+// ─── Scanner Interfaces ─────────────────────────────────────────────
+
+export interface PromptScanner {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  scanInput(text: string): ScanResult;
+  scanOutput(text: string): ScanResult;
+}
+
+export interface MCPScanner {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  scanToolCall(toolName: string, params: Record<string, unknown>): ScanResult;
+}
+
+export interface A2AScanner {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  scanMessage(from: string, to: string, content: string): ScanResult;
+}
+
+export interface PatternScanner {
+  scanText(text: string, patterns: readonly ThreatPattern[]): ScanResult;
+  getAllPatterns(): readonly ThreatPattern[];
+  getPatternSets(): Record<string, readonly ThreatPattern[]>;
+}
+
+// ─── Intelligence Interfaces ────────────────────────────────────────
+
+export interface BudgetStatus {
+  spent: number;
+  budget: number;
+  remaining: number;
+  percentUsed: number;
+  callsThisHour: number;
+  maxCallsPerHour: number;
+  totalCalls: number;
+}
+
+export interface BudgetManager {
+  canAfford(estimatedCostUsd: number): boolean;
+  record(costUsd: number, tokens: number): void;
+  getStatus(): BudgetStatus;
+  reset(): void;
+}
+
+export interface AnomalyScorer {
+  score(event: SecurityEvent): number;
+  record(event: SecurityEvent): void;
+  getBaseline(source: string): { mean: number; stddev: number; count: number } | null;
+  reset(): void;
+}
+
+// ─── LLM Adapter (for mock testing) ────────────────────────────────
+
+export interface LLMAdapter {
+  name: string;
+  assess(prompt: string): Promise<LLMResponse>;
+}
+
+export interface LLMResponse {
+  content: string;
+  usage?: { inputTokens: number; outputTokens: number };
+}
+
+// ─── Event Engine Interface ─────────────────────────────────────────
+
+export interface EventEngine {
+  emit(event: Omit<SecurityEvent, 'id' | 'timestamp' | 'classifiedBy'>): SecurityEvent;
+  onEvent(handler: (event: SecurityEvent) => void | Promise<void>): void;
+}
+
+// ─── Enforcement Interface ──────────────────────────────────────────
+
+export interface EnforcementEngine {
+  execute(action: EnforcementAction, event: SecurityEvent): Promise<EnforcementResult>;
+  pause(pid: number): boolean;
+  resume(pid: number): boolean;
+  kill(pid: number, signal?: string): boolean;
+  getPausedPids(): number[];
+  setAlertCallback(callback: (event: SecurityEvent, rule: AlertRule) => void): void;
+}
+
+// ─── Main Adapter Interface ─────────────────────────────────────────
+
+export interface SecurityProductAdapter {
+  /** Start the security product */
+  start(): Promise<void>;
+  /** Stop the security product */
+  stop(): Promise<void>;
+
+  /** Inject a synthetic event for testing */
+  injectEvent(event: Omit<SecurityEvent, 'id' | 'timestamp' | 'classifiedBy'>): Promise<SecurityEvent>;
+
+  /** Wait for an event matching a predicate */
+  waitForEvent(predicate: (event: SecurityEvent) => boolean, timeoutMs?: number): Promise<SecurityEvent>;
+
+  /** Get collected events */
+  getEvents(): SecurityEvent[];
+  getEventsByCategory(category: EventCategory): SecurityEvent[];
+  getEnforcements(): EnforcementResult[];
+  getEnforcementsByAction(action: EnforcementAction): EnforcementResult[];
+
+  /** Reset collected events */
+  resetCollector(): void;
+
+  /** Access sub-components (for tests that need direct access) */
+  getEventEngine(): EventEngine;
+  getEnforcementEngine(): EnforcementEngine;
+
+  /** Factory methods for component-level testing */
+  createPromptScanner(): PromptScanner;
+  createMCPScanner(allowedTools?: string[]): MCPScanner;
+  createA2AScanner(trustedAgents?: string[]): A2AScanner;
+  createPatternScanner(): PatternScanner;
+  createBudgetManager(dataDir: string, config?: { budgetUsd?: number; maxCallsPerHour?: number }): BudgetManager;
+  createAnomalyScorer(): AnomalyScorer;
+}
+
+// ─── Lab Config ─────────────────────────────────────────────────────
+
+export interface LabConfig {
+  monitors?: {
+    process?: boolean;
+    network?: boolean;
+    filesystem?: boolean;
+  };
+  rules?: AlertRule[];
+  intelligence?: {
+    enabled?: boolean;
+  };
+  dataDir?: string;
+  filesystemWatchPaths?: string[];
+  filesystemAllowedPaths?: string[];
+  networkAllowedHosts?: string[];
+  processIntervalMs?: number;
+  networkIntervalMs?: number;
+  interceptors?: {
+    process?: boolean;
+    network?: boolean;
+    filesystem?: boolean;
+  };
+  interceptorNetworkAllowedHosts?: string[];
+  interceptorFilesystemAllowedPaths?: string[];
+}

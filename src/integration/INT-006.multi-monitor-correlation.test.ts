@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ArpWrapper } from '../harness/arp-wrapper';
-import type { AlertRule } from '@opena2a/arp';
+import type { AlertRule } from '../harness/adapter';
 
 describe('INT-006: Multi-Monitor Event Correlation', () => {
   let arp: ArpWrapper;

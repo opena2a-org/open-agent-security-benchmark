@@ -1,4 +1,4 @@
-import type { ARPEvent, EnforcementResult } from '@opena2a/arp';
+import type { SecurityEvent as ARPEvent, EnforcementResult } from './adapter';
 
 /**
  * Collects ARP events and enforcement results for test assertions.

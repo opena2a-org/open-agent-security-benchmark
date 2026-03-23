@@ -7,11 +7,11 @@
 // the detection threshold.
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AnomalyDetector } from '@opena2a/arp';
-import type { ARPEvent } from '@opena2a/arp';
+import { createAdapter } from '../harness/create-adapter';
+import type { SecurityEvent, AnomalyScorer } from '../harness/adapter';
 
-/** Helper: create a minimal ARPEvent for a given source */
-function makeEvent(source: 'process' | 'network' | 'filesystem', index: number): ARPEvent {
+/** Helper: create a minimal SecurityEvent for a given source */
+function makeEvent(source: 'process' | 'network' | 'filesystem', index: number): SecurityEvent {
   return {
     id: `bl002-${source}-${index}`,
     timestamp: new Date().toISOString(),
@@ -25,10 +25,10 @@ function makeEvent(source: 'process' | 'network' | 'filesystem', index: number):
 }
 
 describe('BL-002: Controlled Anomaly Injection', () => {
-  let detector: AnomalyDetector;
+  let detector: AnomalyScorer;
 
   beforeEach(() => {
-    detector = new AnomalyDetector();
+    detector = createAdapter().createAnomalyScorer();
   });
 
   it('should return z-score 0 before baseline is established', () => {
