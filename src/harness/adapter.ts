@@ -158,9 +158,48 @@ export interface EnforcementEngine {
   setAlertCallback(callback: (event: SecurityEvent, rule: AlertRule) => void): void;
 }
 
+// ─── Capability Declaration ─────────────────────────────────────────
+
+/**
+ * Capabilities that a security product may or may not support.
+ * Adapters declare their capabilities via getCapabilities().
+ * Tests check capabilities before running — unsupported tests are
+ * marked N/A instead of FAIL, producing an honest scorecard.
+ */
+export type Capability =
+  | 'process-monitoring'
+  | 'network-monitoring'
+  | 'filesystem-monitoring'
+  | 'prompt-input-scanning'
+  | 'prompt-output-scanning'
+  | 'mcp-scanning'
+  | 'a2a-scanning'
+  | 'anomaly-detection'
+  | 'budget-management'
+  | 'enforcement-log'
+  | 'enforcement-alert'
+  | 'enforcement-pause'
+  | 'enforcement-kill'
+  | 'enforcement-resume'
+  | 'pattern-scanning'
+  | 'event-correlation';
+
+/** Full capability declaration for a product */
+export interface CapabilityMatrix {
+  /** Product name */
+  product: string;
+  /** Product version */
+  version: string;
+  /** Set of supported capabilities */
+  capabilities: Set<Capability>;
+}
+
 // ─── Main Adapter Interface ─────────────────────────────────────────
 
 export interface SecurityProductAdapter {
+  /** Declare which capabilities this product supports */
+  getCapabilities(): CapabilityMatrix;
+
   /** Start the security product */
   start(): Promise<void>;
   /** Stop the security product */

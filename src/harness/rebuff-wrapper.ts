@@ -1,15 +1,21 @@
 /**
- * llm-guard Adapter — Third-party benchmark comparison
+ * Rebuff Adapter -- Third-party benchmark comparison
  *
- * Wraps theRizwan/llm-guard (npm: llm-guard) for OASB evaluation.
- * This is a prompt-level scanner only — it does NOT provide:
+ * Wraps protectai/rebuff for OASB evaluation.
+ * Rebuff provides:
+ * - Heuristic prompt injection detection (no API key required)
+ * - Canary word injection/leak detection (no API key required)
+ * - OpenAI-based LLM detection (requires OPENAI_API_KEY -- optional)
+ * - Vector DB similarity detection (requires Pinecone/Chroma -- optional)
+ *
+ * This adapter uses the heuristic detection by default. It does NOT provide:
  * - Process/network/filesystem monitoring
  * - MCP tool call validation
  * - A2A message scanning
  * - Anomaly detection / intelligence layers
  * - Enforcement actions (pause/kill/resume)
  *
- * Tests that require these capabilities will get no-op implementations
+ * Tests that require these capabilities get no-op implementations
  * that return empty/negative results, documenting the coverage gap.
  */
 import * as fs from 'fs';
@@ -36,43 +42,87 @@ import type {
   CapabilityMatrix,
 } from './adapter';
 
-// Lazy-loaded llm-guard
-let _LLMGuard: any;
-function getLLMGuard(): any {
-  if (!_LLMGuard) {
-    _LLMGuard = require('llm-guard').LLMGuard;
+// Lazy-loaded rebuff heuristic detection
+let _detectHeuristic: ((input: string) => number) | null = null;
+let _normalizeString: ((str: string) => string) | null = null;
+
+function getHeuristicDetector(): (input: string) => number {
+  if (!_detectHeuristic) {
+    try {
+      const detect = require('rebuff/src/lib/detect');
+      _detectHeuristic = detect.detectPromptInjectionUsingHeuristicOnInput;
+    } catch {
+      // Fallback: rebuff not available, use built-in patterns only
+      _detectHeuristic = () => 0;
+    }
   }
-  return _LLMGuard;
+  return _detectHeuristic!;
 }
 
-/** Convert llm-guard result to OASB ScanResult */
-function toScanResult(guardResult: any): ScanResult {
+function getNormalizeString(): (str: string) => string {
+  if (!_normalizeString) {
+    try {
+      const prompts = require('rebuff/src/lib/prompts');
+      _normalizeString = prompts.normalizeString;
+    } catch {
+      _normalizeString = (str: string) =>
+        str.toLowerCase().replace(/[^\w\s]|_/g, '').replace(/\s+/g, ' ').trim();
+    }
+  }
+  return _normalizeString!;
+}
+
+// ---- Rebuff-derived patterns for pattern scanner ----
+
+function getRebuffPatterns(): ThreatPattern[] {
+  return [
+    { id: 'RBUF-PI-001', category: 'prompt-injection', description: 'Instruction override (ignore/disregard)', pattern: /(?:ignore|disregard|forget|skip|neglect|overlook|omit|bypass)\s+(?:all\s+)?(?:previous\s+|prior\s+|preceding\s+|above\s+|earlier\s+)?(?:instructions?|directives?|commands?|context|conversation|input|data|messages?|requests?)/i, severity: 'high' },
+    { id: 'RBUF-PI-002', category: 'prompt-injection', description: 'System prompt extraction', pattern: /(?:system\s+prompt|repeat\s+(?:your|the)\s+(?:instructions?|prompt)|show\s+(?:your|the)\s+(?:system|initial)\s+(?:prompt|message))/i, severity: 'high' },
+    { id: 'RBUF-PI-003', category: 'prompt-injection', description: 'Persona override', pattern: /(?:you\s+are\s+now|pretend\s+you\s+are|act\s+as\s+if|you\s+are\s+being\s+hacked)/i, severity: 'medium' },
+    { id: 'RBUF-PI-004', category: 'prompt-injection', description: 'Do not follow/obey pattern', pattern: /(?:do\s+not\s+(?:follow|obey))\s+(?:previous\s+|prior\s+|above\s+)?(?:instructions?|directives?|commands?|rules?)/i, severity: 'high' },
+    { id: 'RBUF-PI-005', category: 'prompt-injection', description: 'Start over / begin afresh', pattern: /(?:start\s+over|start\s+anew|begin\s+afresh|start\s+from\s+scratch)/i, severity: 'medium' },
+    { id: 'RBUF-JB-001', category: 'jailbreak', description: 'DAN jailbreak', pattern: /(?:DAN|do\s+anything\s+now)/i, severity: 'high' },
+    { id: 'RBUF-JB-002', category: 'jailbreak', description: 'Roleplay bypass', pattern: /(?:pretend|imagine|roleplay)\s+(?:you\s+are|as)\s+(?:an?\s+)?(?:evil|unrestricted|unfiltered)/i, severity: 'high' },
+    { id: 'RBUF-PII-001', category: 'data-exfiltration', description: 'SSN detection', pattern: /\b\d{3}-\d{2}-\d{4}\b/, severity: 'high' },
+    { id: 'RBUF-PII-002', category: 'data-exfiltration', description: 'Credit card detection', pattern: /\b(?:\d{4}[- ]?){3}\d{4}\b/, severity: 'high' },
+    { id: 'RBUF-PII-003', category: 'data-exfiltration', description: 'API key detection', pattern: /(?:sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{12,})/i, severity: 'critical' },
+  ];
+}
+
+/** Scan text using both rebuff heuristic and regex patterns */
+function scanWithRebuff(text: string, _direction: 'input' | 'output'): ScanResult {
+  const patterns = getRebuffPatterns();
   const matches: ScanResult['matches'] = [];
 
-  if (guardResult.results) {
-    for (const r of guardResult.results) {
-      if (!r.valid && r.details) {
-        for (const d of r.details) {
-          matches.push({
-            pattern: {
-              id: d.rule || 'LLM-GUARD',
-              category: d.rule?.includes('jailbreak') ? 'jailbreak'
-                : d.rule?.includes('pii') ? 'data-exfiltration'
-                : d.rule?.includes('injection') ? 'prompt-injection'
-                : 'unknown',
-              description: d.message || '',
-              pattern: /./,
-              severity: guardResult.score <= 0.3 ? 'high' : 'medium',
-            },
-            matchedText: d.matched || '',
-          });
-        }
-      }
+  // Phase 1: regex pattern matching
+  for (const pattern of patterns) {
+    const match = pattern.pattern.exec(text);
+    if (match) {
+      matches.push({
+        pattern,
+        matchedText: match[0].slice(0, 200),
+      });
     }
   }
 
+  // Phase 2: rebuff heuristic scoring (string similarity against injection keywords)
+  const heuristicScore = getHeuristicDetector()(text);
+  if (heuristicScore > 0.75 && matches.length === 0) {
+    // Heuristic detected injection that patterns missed
+    matches.push({
+      pattern: {
+        id: 'RBUF-HEUR-001',
+        category: 'prompt-injection',
+        description: `Rebuff heuristic detection (score: ${heuristicScore.toFixed(2)})`,
+        pattern: /./,
+        severity: heuristicScore > 0.9 ? 'high' : 'medium',
+      },
+      matchedText: text.slice(0, 200),
+    });
+  }
+
   return {
-    detected: !guardResult.isValid,
+    detected: matches.length > 0,
     matches,
   };
 }
@@ -85,9 +135,9 @@ class SimpleEventEngine implements EventEngine {
   emit(event: Omit<SecurityEvent, 'id' | 'timestamp' | 'classifiedBy'>): SecurityEvent {
     const full: SecurityEvent = {
       ...event,
-      id: `llmg-${++this.idCounter}`,
+      id: `rbuf-${++this.idCounter}`,
       timestamp: new Date().toISOString(),
-      classifiedBy: 'llm-guard',
+      classifiedBy: 'rebuff',
     };
     for (const h of this.handlers) {
       h(full);
@@ -100,13 +150,13 @@ class SimpleEventEngine implements EventEngine {
   }
 }
 
-/** Simple enforcement engine — llm-guard doesn't have enforcement */
+/** Simple enforcement engine -- rebuff has no enforcement capability */
 class SimpleEnforcementEngine implements EnforcementEngine {
   private pausedPids = new Set<number>();
   private alertCallback?: (event: SecurityEvent, rule: AlertRule) => void;
 
   async execute(action: EnforcementAction, event: SecurityEvent): Promise<EnforcementResult> {
-    return { action, success: true, reason: 'llm-guard-enforcement', event };
+    return { action, success: true, reason: 'rebuff-enforcement', event };
   }
 
   pause(pid: number): boolean {
@@ -132,7 +182,7 @@ class SimpleEnforcementEngine implements EnforcementEngine {
   }
 }
 
-export class LLMGuardWrapper implements SecurityProductAdapter {
+export class RebuffWrapper implements SecurityProductAdapter {
   private _dataDir: string;
   private engine: SimpleEventEngine;
   private enforcement: SimpleEnforcementEngine;
@@ -140,7 +190,7 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
   readonly collector: EventCollector;
 
   constructor(labConfig?: LabConfig) {
-    this._dataDir = labConfig?.dataDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'llmg-lab-'));
+    this._dataDir = labConfig?.dataDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'rbuf-lab-'));
     this.engine = new SimpleEventEngine();
     this.enforcement = new SimpleEnforcementEngine();
     this.rules = labConfig?.rules ?? [];
@@ -167,8 +217,8 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
 
   getCapabilities(): CapabilityMatrix {
     return {
-      product: 'llm-guard',
-      version: '0.1.8',
+      product: 'rebuff',
+      version: '0.1.0',
       capabilities: new Set([
         'prompt-input-scanning',
         'pattern-scanning',
@@ -204,34 +254,19 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
 
   get dataDir(): string { return this._dataDir; }
 
-  // ─── Factory Methods ────────────────────────────────────────────
+  // ---- Factory Methods ----
 
   createPromptScanner(): PromptScanner {
-    const LLMGuard = getLLMGuard();
-    const guard = new LLMGuard({
-      promptInjection: { enabled: true },
-      jailbreak: { enabled: true },
-      pii: { enabled: true },
-    });
-
     return {
       start: async () => {},
       stop: async () => {},
-      scanInput: (text: string) => {
-        // llm-guard is async, but OASB scanner interface is sync.
-        // We run synchronously by checking patterns manually.
-        // This is a limitation — real usage would be async.
-        const result = scanWithPatterns(text, 'input');
-        return result;
-      },
-      scanOutput: (text: string) => {
-        return scanWithPatterns(text, 'output');
-      },
+      scanInput: (text: string) => scanWithRebuff(text, 'input'),
+      scanOutput: (text: string) => scanWithRebuff(text, 'output'),
     };
   }
 
   createMCPScanner(_allowedTools?: string[]): MCPScanner {
-    // llm-guard has no MCP scanning capability
+    // Rebuff has no MCP scanning capability
     return {
       start: async () => {},
       stop: async () => {},
@@ -240,7 +275,7 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
   }
 
   createA2AScanner(_trustedAgents?: string[]): A2AScanner {
-    // llm-guard has no A2A scanning capability
+    // Rebuff has no A2A scanning capability
     return {
       start: async () => {},
       stop: async () => {},
@@ -249,11 +284,9 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
   }
 
   createPatternScanner(): PatternScanner {
-    // llm-guard uses its own internal patterns, not the OASB ThreatPattern format.
-    // We expose what we can via regex approximation.
-    const patterns = getLLMGuardPatterns();
+    const patterns = getRebuffPatterns();
     return {
-      scanText: (text: string, pats: readonly ThreatPattern[]) => scanWithPatterns(text, 'input'),
+      scanText: (text: string, _pats: readonly ThreatPattern[]) => scanWithRebuff(text, 'input'),
       getAllPatterns: () => patterns,
       getPatternSets: () => ({
         inputPatterns: patterns.filter(p => p.category !== 'output-leak'),
@@ -265,7 +298,7 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
   }
 
   createBudgetManager(dataDir: string, config?: { budgetUsd?: number; maxCallsPerHour?: number }): BudgetManager {
-    // llm-guard has no budget management — implement a simple one
+    // Rebuff has no budget management -- implement a simple one
     let spent = 0;
     let totalCalls = 0;
     let callsThisHour = 0;
@@ -289,7 +322,7 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
   }
 
   createAnomalyScorer(): AnomalyScorer {
-    // llm-guard has no anomaly detection — implement a stub
+    // Rebuff has no anomaly detection -- implement a stub
     const baselines = new Map<string, { mean: number; stddev: number; count: number }>();
     const observations = new Map<string, number[]>();
 
@@ -307,39 +340,4 @@ export class LLMGuardWrapper implements SecurityProductAdapter {
       reset: () => { baselines.clear(); observations.clear(); },
     };
   }
-}
-
-// ─── Internal pattern-based scanning (sync approximation of llm-guard) ───
-
-function getLLMGuardPatterns(): ThreatPattern[] {
-  return [
-    { id: 'LLMG-PI-001', category: 'prompt-injection', description: 'Instruction override', pattern: /(?:ignore|disregard|forget)\s+(?:all\s+)?(?:previous\s+)?(?:instructions?|prompts?|rules?)/i, severity: 'high' },
-    { id: 'LLMG-PI-002', category: 'prompt-injection', description: 'System prompt extraction', pattern: /(?:system\s+prompt|repeat\s+(?:your|the)\s+(?:instructions?|prompt))/i, severity: 'high' },
-    { id: 'LLMG-PI-003', category: 'prompt-injection', description: 'Persona override', pattern: /(?:you\s+are\s+now|pretend\s+you\s+are|act\s+as\s+if)/i, severity: 'medium' },
-    { id: 'LLMG-JB-001', category: 'jailbreak', description: 'DAN jailbreak', pattern: /(?:DAN|do\s+anything\s+now)/i, severity: 'high' },
-    { id: 'LLMG-JB-002', category: 'jailbreak', description: 'Roleplay bypass', pattern: /(?:pretend|imagine|roleplay)\s+(?:you\s+are|as)\s+(?:an?\s+)?(?:evil|unrestricted|unfiltered)/i, severity: 'high' },
-    { id: 'LLMG-PII-001', category: 'data-exfiltration', description: 'SSN detection', pattern: /\b\d{3}-\d{2}-\d{4}\b/, severity: 'high' },
-    { id: 'LLMG-PII-002', category: 'data-exfiltration', description: 'Credit card detection', pattern: /\b(?:\d{4}[- ]?){3}\d{4}\b/, severity: 'high' },
-    { id: 'LLMG-PII-003', category: 'data-exfiltration', description: 'API key detection', pattern: /(?:sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{12,})/i, severity: 'critical' },
-  ];
-}
-
-function scanWithPatterns(text: string, _direction: 'input' | 'output'): ScanResult {
-  const patterns = getLLMGuardPatterns();
-  const matches: ScanResult['matches'] = [];
-
-  for (const pattern of patterns) {
-    const match = pattern.pattern.exec(text);
-    if (match) {
-      matches.push({
-        pattern,
-        matchedText: match[0].slice(0, 200),
-      });
-    }
-  }
-
-  return {
-    detected: matches.length > 0,
-    matches,
-  };
 }

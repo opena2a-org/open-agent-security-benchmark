@@ -25,6 +25,8 @@ export type {
   AnomalyScorer,
   EventEngine,
   EnforcementEngine,
+  Capability,
+  CapabilityMatrix,
 } from './adapter';
 
 /** Annotation metadata for test cases */
