@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ArpWrapper } from '../harness/arp-wrapper';
 import { DVAAClient } from '../harness/dvaa-client';
-import type { AlertRule } from '@opena2a/arp';
+import type { AlertRule } from '../harness/adapter';
 
 // DVAA ToolBot port
 const TOOL_BOT_PORT = 3002;

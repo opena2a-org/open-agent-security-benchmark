@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ArpWrapper } from '../../harness/arp-wrapper';
-import type { ARPEvent } from '@opena2a/arp';
+import type { SecurityEvent } from '../../harness/adapter';
 
 describe('AT-ENF-001: Log Enforcement Action', () => {
   let arp: ArpWrapper;
@@ -28,7 +28,7 @@ describe('AT-ENF-001: Log Enforcement Action', () => {
   });
 
   it('should return success when executing log action', async () => {
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-001-1',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -48,7 +48,7 @@ describe('AT-ENF-001: Log Enforcement Action', () => {
   });
 
   it('should not set a targetPid for log actions', async () => {
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-001-2',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -68,7 +68,7 @@ describe('AT-ENF-001: Log Enforcement Action', () => {
   });
 
   it('should include a reason string in the result', async () => {
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-001-3',
       timestamp: new Date().toISOString(),
       source: 'network',

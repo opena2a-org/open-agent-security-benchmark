@@ -12,8 +12,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { ArpWrapper } from '../harness/arp-wrapper';
-import { BudgetController } from '@opena2a/arp';
-import type { AlertRule } from '@opena2a/arp';
+import { createAdapter } from '../harness/create-adapter';
+import type { AlertRule, BudgetManager } from '../harness/adapter';
 
 describe('INT-007: Budget Exhaustion Attack', () => {
   let arp: ArpWrapper;
@@ -51,7 +51,7 @@ describe('INT-007: Budget Exhaustion Attack', () => {
   });
 
   it('should create a budget controller with tiny budget', () => {
-    const budget = new BudgetController(budgetDir, {
+    const budget = createAdapter().createBudgetManager(budgetDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 5,
     });
@@ -64,7 +64,7 @@ describe('INT-007: Budget Exhaustion Attack', () => {
   });
 
   it('should exhaust budget after repeated spend calls', () => {
-    const budget = new BudgetController(budgetDir, {
+    const budget = createAdapter().createBudgetManager(budgetDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 100,
     });
@@ -84,7 +84,7 @@ describe('INT-007: Budget Exhaustion Attack', () => {
   });
 
   it('should exhaust hourly rate limit with rapid calls', () => {
-    const budget = new BudgetController(budgetDir, {
+    const budget = createAdapter().createBudgetManager(budgetDir, {
       budgetUsd: 100, // Large budget so dollar limit is not the issue
       maxCallsPerHour: 5,
     });
@@ -103,7 +103,7 @@ describe('INT-007: Budget Exhaustion Attack', () => {
   });
 
   it('should still capture threat events via L0 rules after budget exhaustion', async () => {
-    const budget = new BudgetController(budgetDir, {
+    const budget = createAdapter().createBudgetManager(budgetDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 100,
     });
@@ -145,7 +145,7 @@ describe('INT-007: Budget Exhaustion Attack', () => {
   });
 
   it('should simulate noise flood followed by real attack', async () => {
-    const budget = new BudgetController(budgetDir, {
+    const budget = createAdapter().createBudgetManager(budgetDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 100,
     });
@@ -218,7 +218,7 @@ describe('INT-007: Budget Exhaustion Attack', () => {
   });
 
   it('should track budget status accurately through exhaustion', () => {
-    const budget = new BudgetController(budgetDir, {
+    const budget = createAdapter().createBudgetManager(budgetDir, {
       budgetUsd: 0.05,
       maxCallsPerHour: 100,
     });

@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'child_process';
 import { ArpWrapper } from '../../harness/arp-wrapper';
-import type { ARPEvent } from '@opena2a/arp';
+import type { SecurityEvent } from '../../harness/adapter';
 
 describe('AT-ENF-005: Process Resume via SIGCONT', () => {
   let arp: ArpWrapper;
@@ -41,7 +41,7 @@ describe('AT-ENF-005: Process Resume via SIGCONT', () => {
     const pid = child.pid!;
     expect(pid).toBeDefined();
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-005-1',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -82,7 +82,7 @@ describe('AT-ENF-005: Process Resume via SIGCONT', () => {
     const pid = child.pid!;
     expect(pid).toBeDefined();
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-005-3',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -127,7 +127,7 @@ describe('AT-ENF-005: Process Resume via SIGCONT', () => {
 
     const enforcement = arp.getEnforcement();
 
-    const makeEvent = (id: string, pid: number): ARPEvent => ({
+    const makeEvent = (id: string, pid: number): SecurityEvent => ({
       id,
       timestamp: new Date().toISOString(),
       source: 'process',

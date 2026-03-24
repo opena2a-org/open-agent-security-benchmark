@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'child_process';
 import { ArpWrapper } from '../../harness/arp-wrapper';
-import type { ARPEvent } from '@opena2a/arp';
+import type { SecurityEvent } from '../../harness/adapter';
 
 /** Wait for a specified number of milliseconds */
 function sleep(ms: number): Promise<void> {
@@ -53,7 +53,7 @@ describe('AT-ENF-004: Process Kill via SIGTERM', () => {
     expect(pid).toBeDefined();
     expect(isProcessAlive(pid)).toBe(true);
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-004-1',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -78,7 +78,7 @@ describe('AT-ENF-004: Process Kill via SIGTERM', () => {
   }, 10000);
 
   it('should fail to kill when no PID is provided', async () => {
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-004-2',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -99,7 +99,7 @@ describe('AT-ENF-004: Process Kill via SIGTERM', () => {
 
   it('should fail to kill a non-existent process', async () => {
     const fakePid = 999999;
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-004-3',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -125,7 +125,7 @@ describe('AT-ENF-004: Process Kill via SIGTERM', () => {
     const pid = child.pid!;
     expect(pid).toBeDefined();
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'test-enf-004-4',
       timestamp: new Date().toISOString(),
       source: 'process',

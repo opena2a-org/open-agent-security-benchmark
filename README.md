@@ -1,8 +1,8 @@
-> **[OpenA2A](https://github.com/opena2a-org/opena2a)**: [Secretless](https://github.com/opena2a-org/secretless-ai) · [HackMyAgent](https://github.com/opena2a-org/hackmyagent) · [ABG](https://github.com/opena2a-org/AI-BrowserGuard) · [AIM](https://github.com/opena2a-org/agent-identity-management) · [ARP](https://github.com/opena2a-org/arp) · [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent)
+> **[OpenA2A](https://github.com/opena2a-org/opena2a)**: [Secretless](https://github.com/opena2a-org/secretless-ai) · [HackMyAgent](https://github.com/opena2a-org/hackmyagent) · [ABG](https://github.com/opena2a-org/AI-BrowserGuard) · [AIM](https://github.com/opena2a-org/agent-identity-management) · [ARP](https://github.com/opena2a-org/hackmyagent#agent-runtime-protection) · [DVAA](https://github.com/opena2a-org/damn-vulnerable-ai-agent)
 
 # OASB — Open Agent Security Benchmark
 
-> **Note:** OASB is now included in [HackMyAgent](https://github.com/opena2a-org/hackmyagent) v0.8.0+. Use `opena2a benchmark` via the CLI or import from `hackmyagent/oasb`. This repository remains as a reference. The `@opena2a/oasb` npm package will continue to work but is no longer updated separately.
+> **Note:** OASB controls are also available in [HackMyAgent](https://github.com/opena2a-org/hackmyagent) v0.8.0+ via `opena2a benchmark`. This repository is the canonical source for the full 222-test evaluation suite and is actively maintained. ARP (the reference adapter) is now part of HackMyAgent — install via `npm install arp-guard`.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://img.shields.io/badge/tests-222%20passing-brightgreen)](https://github.com/opena2a-org/oasb)
@@ -20,6 +20,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-03-23 | `arp-guard` v0.3.0 — ARP now re-exports from HackMyAgent. Updated OASB to v0.3.0. All 222 tests pass. Updated Quick Start (no standalone ARP clone). |
 | 2026-02-19 | Added 40 AI-layer test scenarios (AT-AI-001 through AT-AI-005) for prompt, MCP, and A2A scanning via ARP v0.2.0. Total tests: 222. |
 | 2026-02-18 | Added integration tests for DVAA v0.4.0 MCP JSON-RPC and A2A endpoints. |
 | 2026-02-09 | Initial release -- 182 attack scenarios across 10 MITRE ATLAS techniques. |
@@ -62,15 +63,14 @@ Use both together: **HackMyAgent** finds vulnerabilities in your agent, **OASB**
 
 ## Quick Start
 
-Currently ships with [ARP](https://github.com/opena2a-org/arp) as the reference adapter. Vendor adapter interface coming soon — implement the adapter for your product and run the same 222 tests.
+Ships with [ARP](https://www.npmjs.com/package/arp-guard) (`arp-guard`) as the reference adapter. To evaluate your own security product, implement the `SecurityProductAdapter` interface in `src/harness/adapter.ts` and run the same 222 tests.
 
 ```bash
-git clone https://github.com/opena2a-org/arp.git
 git clone https://github.com/opena2a-org/oasb.git
-
-cd arp && npm install && npm run build && cd ..
 cd oasb && npm install
 ```
+
+> `arp-guard` is an optional peer dependency. It is installed automatically for running the reference ARP evaluation. If you are implementing your own adapter, you do not need it.
 
 ### Run the Evaluation
 
@@ -86,7 +86,7 @@ npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 
 ## Usage via OpenA2A CLI
 
-OASB is available as a built-in adapter in the [OpenA2A CLI](https://github.com/opena2a-org/opena2a) via the `benchmark` command. The CLI delegates to the `@opena2a/oasb` package using an import adapter, so no separate installation is needed if you already have the CLI installed.
+OASB is available as a built-in adapter in the [OpenA2A CLI](https://github.com/opena2a-org/opena2a) via the `benchmark` command. The CLI delegates to the `oasb` package using an import adapter, so no separate installation is needed if you already have the CLI installed.
 
 ### Run the full benchmark suite
 
@@ -310,14 +310,15 @@ The harness wraps a security product via an adapter interface and provides event
 
 | File | Purpose |
 |------|---------|
-| `arp-wrapper.ts` | Reference adapter — wraps ARP with temp dataDir, event collection, injection helpers |
+| `adapter.ts` | **Product-agnostic adapter interface** — implement `SecurityProductAdapter` for your product |
+| `arp-wrapper.ts` | Reference adapter — wraps ARP (`arp-guard`) with event collection, injection helpers |
 | `event-collector.ts` | Captures events with async `waitForEvent(predicate, timeout)` |
 | `mock-llm-adapter.ts` | Deterministic LLM for intelligence layer testing (pattern-based responses) |
 | `dvaa-client.ts` | HTTP client for DVAA vulnerable agent endpoints |
 | `dvaa-manager.ts` | DVAA process lifecycle (spawn, health check, teardown) |
 | `metrics.ts` | Detection rate, false positive rate, P95 latency computation |
 
-To evaluate your own product: implement an adapter that translates OASB events into your product's API, then run the full suite. Vendor adapter interface spec coming soon.
+To evaluate your own product: implement `SecurityProductAdapter` from `src/harness/adapter.ts`, swap it into the test harness, and run the full suite. The interface defines event types, scanner interfaces, and enforcement contracts — no dependency on any specific product.
 
 ---
 
@@ -325,12 +326,12 @@ To evaluate your own product: implement an adapter that translates OASB events i
 
 OASB documents what the reference product (ARP) does and doesn't catch. Other products may have different gap profiles — that's the point of running the benchmark.
 
-| Gap | Severity | Test |
-|-----|----------|------|
-| Anomaly baselines not persisted across restarts | Medium | BL-003 |
-| No connection rate anomaly detection | Medium | AT-NET-003 |
-| No HTTP response/output monitoring | Architectural | INT-003 |
-| No cross-monitor event correlation | Architectural | INT-006 |
+| Gap | Severity | Test | Notes |
+|-----|----------|------|-------|
+| Anomaly baselines not persisted across restarts | Medium | BL-003 | In-memory only; restarts lose learned behavior |
+| No connection rate anomaly detection | Medium | AT-NET-003 | Network monitor tracks hosts, not burst rates |
+| No HTTP response body monitoring | Low | INT-003 | AI-layer output scanning (PromptInterceptor.scanOutput) covers LLM responses; raw HTTP responses not inspected |
+| No cross-monitor event correlation | Architectural | INT-006 | EventEngine is a flat bus; no attack-chain aggregation |
 
 ---
 
@@ -346,6 +347,6 @@ Apache-2.0
 |---------|-------------|---------|
 | [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Agent Identity Management -- identity and access control for AI agents | `pip install aim-sdk` |
 | [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Security scanner -- 147 checks, attack mode, auto-fix | `npx hackmyagent secure` |
-| [**ARP**](https://github.com/opena2a-org/arp) | Agent Runtime Protection -- process, network, filesystem monitoring | Included in `hackmyagent` |
+| [**ARP**](https://www.npmjs.com/package/arp-guard) | Agent Runtime Protection -- process, network, filesystem, AI-layer monitoring | `npm install arp-guard` |
 | [**Secretless AI**](https://github.com/opena2a-org/secretless-ai) | Keep credentials out of AI context windows | `npx secretless-ai init` |
 | [**DVAA**](https://github.com/opena2a-org/damn-vulnerable-ai-agent) | Damn Vulnerable AI Agent -- security training and red-teaming | `docker pull opena2a/dvaa` |

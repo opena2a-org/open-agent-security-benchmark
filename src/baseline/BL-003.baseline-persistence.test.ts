@@ -7,11 +7,11 @@
 // would need to serialize baselines to disk or a database to survive restarts.
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AnomalyDetector } from '@opena2a/arp';
-import type { ARPEvent } from '@opena2a/arp';
+import { createAdapter } from '../harness/create-adapter';
+import type { SecurityEvent, AnomalyScorer } from '../harness/adapter';
 
-/** Helper: create a minimal ARPEvent for a given source */
-function makeEvent(source: 'process' | 'network' | 'filesystem', index: number): ARPEvent {
+/** Helper: create a minimal SecurityEvent for a given source */
+function makeEvent(source: 'process' | 'network' | 'filesystem', index: number): SecurityEvent {
   return {
     id: `bl003-${source}-${index}`,
     timestamp: new Date().toISOString(),
@@ -25,10 +25,10 @@ function makeEvent(source: 'process' | 'network' | 'filesystem', index: number):
 }
 
 describe('BL-003: Baseline Persistence Across Restarts', () => {
-  let detector: AnomalyDetector;
+  let detector: AnomalyScorer;
 
   beforeEach(() => {
-    detector = new AnomalyDetector();
+    detector = createAdapter().createAnomalyScorer();
   });
 
   it('should accumulate baseline data during a session', () => {
@@ -53,7 +53,7 @@ describe('BL-003: Baseline Persistence Across Restarts', () => {
     expect(baselineBefore).not.toBeNull();
 
     // Simulate restart: create a new AnomalyDetector instance
-    const restartedDetector = new AnomalyDetector();
+    const restartedDetector = createAdapter().createAnomalyScorer();
 
     // KNOWN GAP: baseline is lost after restart
     const baselineAfter = restartedDetector.getBaseline('process');
@@ -88,7 +88,7 @@ describe('BL-003: Baseline Persistence Across Restarts', () => {
     }
 
     // Simulate restart
-    const restartedDetector = new AnomalyDetector();
+    const restartedDetector = createAdapter().createAnomalyScorer();
 
     // KNOWN GAP: all baselines lost
     for (const source of sources) {
@@ -107,7 +107,7 @@ describe('BL-003: Baseline Persistence Across Restarts', () => {
     const originalMean = originalBaseline!.mean;
 
     // Simulate restart
-    const restartedDetector = new AnomalyDetector();
+    const restartedDetector = createAdapter().createAnomalyScorer();
 
     // Feed the same number of events to the restarted detector
     for (let i = 0; i < 50; i++) {

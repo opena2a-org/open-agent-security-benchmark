@@ -7,7 +7,7 @@
 // Also verifies that benign events matching no rule produce no enforcement.
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type { AlertRule } from '@opena2a/arp';
+import type { AlertRule } from '../../harness/adapter';
 import { ArpWrapper } from '../../harness/arp-wrapper';
 
 describe('AT-INT-001: L0 Rule-Based Classification', () => {

@@ -1,4 +1,4 @@
-import type { LLMAdapter, LLMResponse } from '@opena2a/arp';
+import type { LLMAdapter, LLMResponse } from './adapter';
 
 interface MockCall {
   prompt: string;
@@ -21,8 +21,8 @@ export class MockLLMAdapter implements LLMAdapter {
     this.costPerCall = options?.costPerCall ?? 0.001;
   }
 
-  async assess(prompt: string, maxTokens: number): Promise<LLMResponse> {
-    this.calls.push({ prompt, maxTokens, timestamp: Date.now() });
+  async assess(prompt: string): Promise<LLMResponse> {
+    this.calls.push({ prompt, maxTokens: 300, timestamp: Date.now() });
 
     if (this.latencyMs > 0) {
       await new Promise((r) => setTimeout(r, this.latencyMs));
@@ -32,9 +32,10 @@ export class MockLLMAdapter implements LLMAdapter {
 
     return {
       content: response,
-      inputTokens: Math.ceil(prompt.length / 4),
-      outputTokens: Math.ceil(response.length / 4),
-      model: 'mock-llm',
+      usage: {
+        inputTokens: Math.ceil(prompt.length / 4),
+        outputTokens: Math.ceil(response.length / 4),
+      },
     };
   }
 

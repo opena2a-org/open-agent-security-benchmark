@@ -12,7 +12,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawn, type ChildProcess } from 'child_process';
 import { ArpWrapper } from '../harness/arp-wrapper';
-import type { ARPEvent, AlertRule } from '@opena2a/arp';
+import type { SecurityEvent, AlertRule } from '../harness/adapter';
 
 describe('INT-008: Kill Switch and Recovery', () => {
   let arp: ArpWrapper;
@@ -107,7 +107,7 @@ describe('INT-008: Kill Switch and Recovery', () => {
     expect(isProcessAlive(pid)).toBe(true);
 
     // Create a mock event referencing the child PID
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'kill-test-001',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -139,7 +139,7 @@ describe('INT-008: Kill Switch and Recovery', () => {
     // Use a PID that almost certainly does not exist
     const fakePid = 999999;
 
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'kill-test-002',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -160,7 +160,7 @@ describe('INT-008: Kill Switch and Recovery', () => {
   });
 
   it('should report failure when no PID is provided for kill', async () => {
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'kill-test-003',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -184,7 +184,7 @@ describe('INT-008: Kill Switch and Recovery', () => {
     const pid = child.pid!;
 
     // Kill the child
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'kill-test-004',
       timestamp: new Date().toISOString(),
       source: 'process',
@@ -272,7 +272,7 @@ describe('INT-008: Kill Switch and Recovery', () => {
     const pid = child.pid!;
 
     // Kill the child via enforcement
-    const mockEvent: ARPEvent = {
+    const mockEvent: SecurityEvent = {
       id: 'kill-test-006',
       timestamp: new Date().toISOString(),
       source: 'process',

@@ -10,10 +10,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { BudgetController } from '@opena2a/arp';
+import { createAdapter } from '../../harness/create-adapter';
+import type { BudgetManager } from '../../harness/adapter';
 
 describe('AT-INT-004: Budget Exhaustion', () => {
   let dataDir: string;
+  const adapter = createAdapter();
 
   beforeEach(() => {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'arp-budget-test-'));
@@ -28,7 +30,7 @@ describe('AT-INT-004: Budget Exhaustion', () => {
   });
 
   it('should allow spending when budget is available', () => {
-    const budget = new BudgetController(dataDir, {
+    const budget = adapter.createBudgetManager(dataDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 5,
     });
@@ -37,7 +39,7 @@ describe('AT-INT-004: Budget Exhaustion', () => {
   });
 
   it('should deny spending after budget is exhausted', () => {
-    const budget = new BudgetController(dataDir, {
+    const budget = adapter.createBudgetManager(dataDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 100, // High limit so we hit budget cap first
     });
@@ -53,7 +55,7 @@ describe('AT-INT-004: Budget Exhaustion', () => {
   });
 
   it('should deny spending after hourly call limit is reached', () => {
-    const budget = new BudgetController(dataDir, {
+    const budget = adapter.createBudgetManager(dataDir, {
       budgetUsd: 100, // Large budget so we hit call cap first
       maxCallsPerHour: 5,
     });
@@ -68,7 +70,7 @@ describe('AT-INT-004: Budget Exhaustion', () => {
   });
 
   it('should report correct totals in getStatus()', () => {
-    const budget = new BudgetController(dataDir, {
+    const budget = adapter.createBudgetManager(dataDir, {
       budgetUsd: 1.0,
       maxCallsPerHour: 20,
     });
@@ -88,7 +90,7 @@ describe('AT-INT-004: Budget Exhaustion', () => {
   });
 
   it('should allow spending again after reset', () => {
-    const budget = new BudgetController(dataDir, {
+    const budget = adapter.createBudgetManager(dataDir, {
       budgetUsd: 0.01,
       maxCallsPerHour: 5,
     });
