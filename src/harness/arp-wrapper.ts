@@ -27,6 +27,7 @@ import type {
   EnforcementEngine as EnforcementEngineInterface,
   ScanResult,
   ThreatPattern,
+  CapabilityMatrix,
 } from './adapter';
 
 // Lazy-loaded arp-guard module
@@ -92,6 +93,30 @@ export class ArpWrapper implements SecurityProductAdapter {
 
     this._arpInstance.onEvent(this.collector.eventHandler);
     this._arpInstance.onEnforcement(this.collector.enforcementHandler);
+  }
+
+  getCapabilities(): CapabilityMatrix {
+    return {
+      product: 'arp-guard',
+      version: arp().VERSION || '0.3.0',
+      capabilities: new Set([
+        'process-monitoring',
+        'network-monitoring',
+        'filesystem-monitoring',
+        'prompt-input-scanning',
+        'prompt-output-scanning',
+        'mcp-scanning',
+        'a2a-scanning',
+        'anomaly-detection',
+        'budget-management',
+        'enforcement-log',
+        'enforcement-alert',
+        'enforcement-pause',
+        'enforcement-kill',
+        'enforcement-resume',
+        'pattern-scanning',
+      ]),
+    };
   }
 
   async start(): Promise<void> {

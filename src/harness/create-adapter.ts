@@ -15,6 +15,7 @@ import type { SecurityProductAdapter, LabConfig } from './adapter';
 // so the cost is acceptable. Each wrapper handles lazy loading internally.
 import { ArpWrapper } from './arp-wrapper';
 import { LLMGuardWrapper } from './llm-guard-wrapper';
+import { RebuffWrapper } from './rebuff-wrapper';
 
 let AdapterClass: new (config?: LabConfig) => SecurityProductAdapter;
 
@@ -26,6 +27,9 @@ switch (adapterName) {
     break;
   case 'llm-guard':
     AdapterClass = LLMGuardWrapper;
+    break;
+  case 'rebuff':
+    AdapterClass = RebuffWrapper;
     break;
   default: {
     // Custom adapter — loaded at module level
