@@ -82,6 +82,8 @@ npm run test:baseline       # 3 baseline tests
 npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 ```
 
+<!-- SCREENSHOT: OASB benchmark score output showing L1/L2/L3 compliance -->
+
 ---
 
 ## Usage via OpenA2A CLI
@@ -345,8 +347,8 @@ Apache-2.0
 
 | Project | Description | Install |
 |---------|-------------|---------|
-| [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Agent Identity Management -- identity and access control for AI agents | `pip install aim-sdk` |
-| [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Security scanner -- 147 checks, attack mode, auto-fix | `npx hackmyagent secure` |
+| [**AIM**](https://github.com/opena2a-org/agent-identity-management) | Agent Identity Management -- identity and access control for AI agents | `npm install @opena2a/aim-core` |
+| [**HackMyAgent**](https://github.com/opena2a-org/hackmyagent) | Security scanner -- 204 checks, attack mode, auto-fix | `npx hackmyagent secure` |
 | [**ARP**](https://www.npmjs.com/package/arp-guard) | Agent Runtime Protection -- process, network, filesystem, AI-layer monitoring | `npm install arp-guard` |
 | [**Secretless AI**](https://github.com/opena2a-org/secretless-ai) | Keep credentials out of AI context windows | `npx secretless-ai init` |
 | [**DVAA**](https://github.com/opena2a-org/damn-vulnerable-ai-agent) | Damn Vulnerable AI Agent -- security training and red-teaming | `docker pull opena2a/dvaa` |
