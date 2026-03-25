@@ -82,7 +82,7 @@ npm run test:baseline       # 3 baseline tests
 npx vitest run src/e2e/     # 6 E2E tests (real OS detection)
 ```
 
-<!-- SCREENSHOT: OASB benchmark score output showing L1/L2/L3 compliance -->
+![OASB Demo](docs/oasb-demo.gif)
 
 ---
 
