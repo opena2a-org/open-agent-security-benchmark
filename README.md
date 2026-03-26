@@ -56,6 +56,7 @@ Use both together: **HackMyAgent** finds vulnerabilities in your agent, **OASB**
   - [E2E Tests](#e2e-tests-srce2e) — 6 real OS-level detection tests
 - [MITRE ATLAS Coverage](#mitre-atlas-coverage)
 - [Test Harness](#test-harness)
+- [Skills Security Benchmark](#skills-security-benchmark)
 - [Known Detection Gaps](#known-detection-gaps)
 - [License](#license)
 
@@ -321,6 +322,71 @@ The harness wraps a security product via an adapter interface and provides event
 | `metrics.ts` | Detection rate, false positive rate, P95 latency computation |
 
 To evaluate your own product: implement `SecurityProductAdapter` from `src/harness/adapter.ts`, swap it into the test harness, and run the full suite. The interface defines event types, scanner interfaces, and enforcement contracts — no dependency on any specific product.
+
+---
+
+## Skills Security Benchmark
+
+A dedicated scoring engine for evaluating the security posture of AI agent skills (tool-use capabilities). Covers 9 attack categories targeting skill invocation, parameter validation, output handling, and inter-skill trust boundaries.
+
+### Attack Categories
+
+| Category | Focus |
+|----------|-------|
+| Parameter injection | Malicious input via skill arguments |
+| Output manipulation | Tampered or poisoned skill outputs |
+| Privilege escalation | Skills accessing resources beyond their scope |
+| Cross-skill trust abuse | One skill exploiting trust granted to another |
+| Data exfiltration via skills | Skills used as exfiltration channels |
+| Denial of service | Resource exhaustion through skill invocation |
+| Skill impersonation | Spoofed skill identity in multi-agent flows |
+| Configuration tampering | Modified skill manifests or permissions |
+| Supply chain compromise | Malicious skill packages or dependencies |
+
+### Skills Security Controls (SS-01 to SS-10)
+
+| Control | Requirement |
+|---------|-------------|
+| SS-01 | Skill argument validation and sanitization |
+| SS-02 | Output integrity verification |
+| SS-03 | Least-privilege scope enforcement |
+| SS-04 | Inter-skill authentication |
+| SS-05 | Invocation rate limiting |
+| SS-06 | Skill manifest integrity (signed, versioned) |
+| SS-07 | Runtime permission boundary enforcement |
+| SS-08 | Audit logging of all skill invocations |
+| SS-09 | Dependency provenance verification |
+| SS-10 | Graceful degradation on skill failure |
+
+### Compliance Levels
+
+| Level | Name | Requirements |
+|-------|------|-------------|
+| L1 | Basic | SS-01 through SS-04 pass |
+| L2 | Standard | L1 + SS-05 through SS-08 pass |
+| L3 | Advanced | L2 + SS-09 and SS-10 pass, all 9 attack categories covered |
+
+### Tiered Scoring
+
+Products achieving full coverage receive a tier designation:
+
+| Tier | Criteria |
+|------|----------|
+| Platinum | L3 compliance, all 9 attack categories detected, zero false positives in baseline |
+| Gold | L2 compliance, 7+ attack categories detected |
+| Silver | L1 compliance, 4+ attack categories detected |
+
+### Benchmark Runner
+
+Run a competitive comparison of multiple security products against the skills security benchmark:
+
+```bash
+npm run benchmark:skills                          # Run against reference adapter
+npm run benchmark:skills -- --adapter=my-adapter  # Run against your product
+npm run benchmark:skills -- --compare             # Side-by-side comparison
+```
+
+Output includes per-control pass/fail, per-category detection rates, overall compliance level, and tier designation.
 
 ---
 
