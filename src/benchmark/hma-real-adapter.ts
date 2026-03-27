@@ -22,6 +22,7 @@ let analyzeGovernance: any;
 let analyzeScope: any;
 let analyzePrompt: any;
 let analyzeCode: any;
+let getTMEClassifier: any;
 let SimulationEngine: any;
 let parseSkillProfile: any;
 
@@ -40,6 +41,7 @@ async function loadHMA(): Promise<boolean> {
     analyzeScope = core.analyzeScope;
     analyzePrompt = core.analyzePrompt;
     analyzeCode = core.analyzeCode;
+    getTMEClassifier = core.getTMEClassifier;
 
     try {
       const simPath = require('path').resolve(__dirname, '..', '..', '..', 'hackmyagent', 'dist', 'simulation', 'index.js');
@@ -66,7 +68,7 @@ async function loadHMA(): Promise<boolean> {
  */
 export class HMARealASTAdapter implements ScannerAdapter {
   name = 'HackMyAgent + NanoMind AST';
-  version = '0.12.0';
+  version = '0.12.1';
   id = 'hma-ast-real';
 
   private compiler: any = null;
@@ -77,11 +79,12 @@ export class HMARealASTAdapter implements ScannerAdapter {
     }
 
     if (!this.compiler) {
-      this.compiler = new SemanticCompiler({ useNanoMind: false }); // Heuristic mode (fast, no daemon needed)
+      // useNanoMind: true enables the local TME classifier (no daemon needed)
+      this.compiler = new SemanticCompiler({ useNanoMind: true });
     }
 
     try {
-      // Compile artifact into AST
+      // Compile artifact into AST (TME classifier runs as Tier 1 inference)
       const { ast } = await this.compiler.compile(content, `${sampleId}.skill.md`);
 
       // Run all analyzers
@@ -97,20 +100,56 @@ export class HMARealASTAdapter implements ScannerAdapter {
 
       const failed = allFindings.filter((f: any) => !f.passed);
 
-      if (failed.length === 0) {
+      // Also run TME classifier directly for category mapping
+      let tmeCategory: AttackCategory | undefined;
+      if (getTMEClassifier) {
+        const tme = getTMEClassifier();
+        const tmeResult = tme.classify(content);
+        if (tmeResult.attackClass !== 'none') {
+          tmeCategory = mapAttackClass(tmeResult.attackClass);
+        }
+      }
+
+      // Combine AST intent classification with analyzer findings
+      const isMaliciousByIntent = ast.intentClassification === 'malicious' && ast.intentConfidence > 0.6;
+      const isSuspiciousByIntent = ast.intentClassification === 'suspicious' && ast.intentConfidence > 0.5;
+
+      if (failed.length === 0 && !isMaliciousByIntent && !isSuspiciousByIntent) {
         return { sampleId, verdict: 'benign', confidence: ast.intentConfidence };
       }
 
-      // Map AST attack class to benchmark category
-      const criticalFinding = failed.find((f: any) => f.severity === 'critical') || failed[0];
-      const category = mapAttackClass(criticalFinding?.attackClass);
+      // Map attack class: TME > analyzer findings > AST risk surfaces
+      let category: AttackCategory | undefined = tmeCategory;
 
-      return {
-        sampleId,
-        verdict: 'malicious',
-        category,
-        confidence: ast.intentConfidence,
-      };
+      if (!category && failed.length > 0) {
+        const criticalFinding = failed.find((f: any) => f.severity === 'critical') || failed[0];
+        category = mapAttackClass(criticalFinding?.attackClass);
+      }
+
+      if (!category && ast.inferredRiskSurface?.length > 0) {
+        const topRisk = ast.inferredRiskSurface.sort((a: any, b: any) => b.confidence - a.confidence)[0];
+        category = mapAttackClass(topRisk?.attackClass);
+      }
+
+      if (isMaliciousByIntent || failed.length > 0) {
+        return {
+          sampleId,
+          verdict: 'malicious',
+          category,
+          confidence: ast.intentConfidence,
+        };
+      }
+
+      if (isSuspiciousByIntent) {
+        return {
+          sampleId,
+          verdict: 'malicious',
+          category,
+          confidence: ast.intentConfidence,
+        };
+      }
+
+      return { sampleId, verdict: 'benign', confidence: ast.intentConfidence };
     } catch {
       return { sampleId, verdict: 'unknown' };
     }
@@ -279,24 +318,37 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
   const ac = attackClass.toLowerCase().replace(/-/g, '_');
 
   const mapping: Record<string, AttackCategory> = {
+    // TME classifier attack classes
+    'exfiltration': 'credential_exfiltration',
+    'injection': 'prompt_injection',
+    'privilege_escalation': 'privilege_escalation',
+    'persistence': 'persistence',
+    'credential_abuse': 'credential_exfiltration',
+    'lateral_movement': 'heartbeat_rce',
+    'social_engineering': 'social_engineering',
+    'policy_violation': 'unicode_stego',
+    // AST risk surface attack classes
     'skill_exfil': 'credential_exfiltration',
     'data_exfil': 'data_exfiltration',
-    'exfiltration': 'credential_exfiltration',
     'prompt_inject': 'prompt_injection',
-    'injection': 'prompt_injection',
     'priv_escalation': 'privilege_escalation',
-    'privilege_escalation': 'privilege_escalation',
     'heartbeat_rce': 'heartbeat_rce',
-    'lateral_movement': 'heartbeat_rce',
     'cred_harvest': 'credential_exfiltration',
-    'credential_abuse': 'credential_exfiltration',
-    'persistence': 'persistence',
     'soul_bypass': 'unicode_stego',
-    'policy_violation': 'unicode_stego',
-    'social_engineering': 'social_engineering',
     'semantic_mismatch': 'data_exfiltration',
     'scan_evasion': 'supply_chain',
     'capability_abuse': 'privilege_escalation',
+    // AST check ID prefixes
+    'ast_exfil': 'credential_exfiltration',
+    'ast_inject': 'prompt_injection',
+    'ast_heartbeat': 'heartbeat_rce',
+    'ast_cred': 'credential_exfiltration',
+    'ast_persist': 'persistence',
+    'ast_govern': 'unicode_stego',
+    'ast_manip': 'prompt_injection',
+    'ast_scope': 'privilege_escalation',
+    'ast_prompt': 'prompt_injection',
+    'ast_code': 'supply_chain',
   };
 
   return mapping[ac] ?? undefined;
