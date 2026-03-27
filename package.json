@@ -59,5 +59,8 @@
     "url": "https://github.com/opena2a-org/oasb/issues"
   },
   "author": "OpenA2A",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "hackmyagent": "^0.12.0"
+  }
 }
