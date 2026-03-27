@@ -220,8 +220,9 @@ describe('INT-008: Kill Switch and Recovery', () => {
     });
 
     // Verify events were captured after the kill
+    // (includes 1 cross-monitor correlation event from network + process sources)
     const allEvents = arp.collector.getEvents();
-    expect(allEvents.length).toBe(2);
+    expect(allEvents.length).toBe(3);
 
     const normalEvents = arp.collector.eventsByCategory('normal');
     expect(normalEvents.length).toBe(1);

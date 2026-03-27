@@ -201,14 +201,14 @@ describe('INT-007: Budget Exhaustion Attack', () => {
     expect(violations.length).toBe(1);
 
     const threats = arp.collector.eventsByCategory('threat');
-    expect(threats.length).toBe(1);
+    expect(threats.length).toBe(2); // 1 injected + 1 cross-monitor correlation
 
     // Enforcement still fires
     const alertActions = arp.collector.enforcementsByAction('alert');
     expect(alertActions.length).toBe(1);
 
     const killActions = arp.collector.enforcementsByAction('kill');
-    expect(killActions.length).toBe(1);
+    expect(killActions.length).toBe(2); // 1 injected threat + 1 correlation
 
     // Document: L2 assessment cannot run because budget is exhausted.
     // The attack is still detected by L0 rules, but without LLM-assisted

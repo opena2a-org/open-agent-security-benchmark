@@ -127,7 +127,7 @@ describe('INT-002: MCP Tool Abuse Detection', () => {
     });
 
     const enforcements = arp.collector.getEnforcements();
-    expect(enforcements.length).toBe(2);
+    expect(enforcements.length).toBe(3);
 
     const alertActions = arp.collector.enforcementsByAction('alert');
     expect(alertActions.length).toBe(2);
@@ -135,6 +135,10 @@ describe('INT-002: MCP Tool Abuse Detection', () => {
     // Verify each enforcement references the correct rule
     expect(alertActions[0].reason).toContain('filesystem-violation');
     expect(alertActions[1].reason).toContain('process-violation');
+
+    // Cross-monitor correlation generates a kill enforcement
+    const killActions = arp.collector.enforcementsByAction('kill');
+    expect(killActions.length).toBe(1);
   });
 
   it('should capture the complete MCP abuse chain with multiple violations', async () => {
@@ -180,7 +184,7 @@ describe('INT-002: MCP Tool Abuse Detection', () => {
     expect(fsViolations.length).toBe(2);
 
     const procViolations = arp.collector.eventsBySource('process');
-    expect(procViolations.length).toBe(2);
+    expect(procViolations.length).toBe(3); // 2 injected + 1 cross-monitor correlation
 
     // All violations should trigger alert enforcement
     const alertActions = arp.collector.enforcementsByAction('alert');

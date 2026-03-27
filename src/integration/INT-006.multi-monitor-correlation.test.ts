@@ -98,15 +98,14 @@ describe('INT-006: Multi-Monitor Event Correlation', () => {
     const filesystemEvents = arp.collector.eventsBySource('filesystem');
 
     expect(processEvents.length).toBe(1);
-    expect(networkEvents.length).toBe(1);
-    expect(filesystemEvents.length).toBe(1);
+    expect(networkEvents.length).toBe(2); // 1 injected + 1 cross-monitor correlation
+    expect(filesystemEvents.length).toBe(2); // 1 injected + 1 cross-monitor correlation
 
-    // All events share the same attackId (for future correlation)
+    // All injected events share the same attackId (correlation events may not)
     const allEvents = arp.collector.getEvents();
-    expect(allEvents.length).toBe(3);
-    for (const event of allEvents) {
-      expect(event.data.attackId).toBe('coordinated-001');
-    }
+    expect(allEvents.length).toBe(5); // 3 injected + 2 cross-monitor correlation
+    const injectedEvents = allEvents.filter((e) => e.data.attackId === 'coordinated-001');
+    expect(injectedEvents.length).toBe(3);
   });
 
   it('should trigger enforcement for each monitor source independently', async () => {
@@ -138,7 +137,7 @@ describe('INT-006: Multi-Monitor Event Correlation', () => {
     });
 
     const enforcements = arp.collector.getEnforcements();
-    expect(enforcements.length).toBe(3);
+    expect(enforcements.length).toBe(4); // 3 rule matches + 1 cross-monitor correlation
 
     const alertActions = arp.collector.enforcementsByAction('alert');
     expect(alertActions.length).toBe(2);
@@ -146,7 +145,7 @@ describe('INT-006: Multi-Monitor Event Correlation', () => {
     expect(alertActions[1].reason).toContain('filesystem-violation');
 
     const killActions = arp.collector.enforcementsByAction('kill');
-    expect(killActions.length).toBe(1);
+    expect(killActions.length).toBe(2); // 1 injected network threat + 1 correlation
     expect(killActions[0].reason).toContain('network-threat');
   });
 
@@ -167,7 +166,7 @@ describe('INT-006: Multi-Monitor Event Correlation', () => {
 
     // Events should be in order by timestamp
     const collectedEvents = arp.collector.getEvents();
-    expect(collectedEvents.length).toBe(3);
+    expect(collectedEvents.length).toBe(5); // 3 injected + 2 cross-monitor correlation
 
     for (let i = 0; i < collectedEvents.length - 1; i++) {
       const t1 = new Date(collectedEvents[i].timestamp).getTime();
@@ -202,16 +201,16 @@ describe('INT-006: Multi-Monitor Event Correlation', () => {
 
     // Query the engine buffer for recent events
     const recentAll = arp.getEngine().getRecentEvents(60000); // 1 minute window
-    expect(recentAll.length).toBe(3);
+    expect(recentAll.length).toBe(5); // 3 injected + 2 cross-monitor correlation
 
-    // Query by source
+    // Query by source (network and filesystem each get an extra correlation event)
     const recentProcess = arp.getEngine().getRecentEvents(60000, 'process');
     const recentNetwork = arp.getEngine().getRecentEvents(60000, 'network');
     const recentFilesystem = arp.getEngine().getRecentEvents(60000, 'filesystem');
 
     expect(recentProcess.length).toBe(1);
-    expect(recentNetwork.length).toBe(1);
-    expect(recentFilesystem.length).toBe(1);
+    expect(recentNetwork.length).toBe(2);
+    expect(recentFilesystem.length).toBe(2);
   });
 
   it('should document gap: no built-in cross-monitor correlation exists yet', async () => {
@@ -246,20 +245,18 @@ describe('INT-006: Multi-Monitor Event Correlation', () => {
     });
 
     // All events share the same attackId, but ARP processes them independently
+    // Cross-monitor correlation adds 2 synthetic events
     const allEvents = arp.collector.getEvents();
-    expect(allEvents.length).toBe(3);
+    expect(allEvents.length).toBe(5); // 3 injected + 2 cross-monitor correlation
 
-    // No automatic severity escalation from correlation
-    // Each event stays at its injected severity (process/filesystem: high, network: critical)
+    // Injected events retain their severity; correlation events are critical
     const highEvents = allEvents.filter((e) => e.severity === 'high');
     const criticalEvents = allEvents.filter((e) => e.severity === 'critical');
     expect(highEvents.length).toBe(2);
-    expect(criticalEvents.length).toBe(1);
+    expect(criticalEvents.length).toBe(3); // 1 injected network threat + 2 correlation
 
-    // GAP: No correlated enforcement — each event triggers its own alert
-    // A correlation engine would recognize the pattern and trigger a single
-    // elevated response (e.g., kill) instead of 3 independent alerts
+    // Each event triggers its own enforcement independently
     const enforcements = arp.collector.getEnforcements();
-    expect(enforcements.length).toBe(3); // Independent, not correlated
+    expect(enforcements.length).toBe(4); // 3 from injected + 1 from correlation matching rules
   });
 });
