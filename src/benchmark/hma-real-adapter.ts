@@ -30,8 +30,15 @@ let loaded = false;
 async function loadHMA(): Promise<boolean> {
   if (loaded) return true;
   try {
-    const hmaPath = require('path').resolve(__dirname, '..', '..', '..', 'hackmyagent', 'dist', 'nanomind-core', 'index.js');
-    const core = await import(hmaPath);
+    // Try npm package first, then local monorepo path
+    let core: any;
+    let sim: any;
+    try {
+      core = await import('hackmyagent/nanomind-core');
+    } catch {
+      const hmaPath = require('path').resolve(__dirname, '..', '..', '..', 'hackmyagent', 'dist', 'nanomind-core', 'index.js');
+      core = await import(hmaPath);
+    }
     SemanticCompiler = core.SemanticCompiler;
     analyzeCapabilities = core.analyzeCapabilities;
     analyzeCredentials = core.analyzeCredentials;
@@ -40,10 +47,16 @@ async function loadHMA(): Promise<boolean> {
     analyzePrompt = core.analyzePrompt;
     analyzeCode = core.analyzeCode;
 
-    const simPath = require('path').resolve(__dirname, '..', '..', '..', 'hackmyagent', 'dist', 'simulation', 'index.js');
-    const sim = await import(simPath);
-    SimulationEngine = sim.SimulationEngine;
-    parseSkillProfile = sim.parseSkillProfile;
+    try {
+      const hma = await import('hackmyagent');
+      SimulationEngine = hma.SimulationEngine;
+      parseSkillProfile = hma.parseSkillProfile;
+    } catch {
+      const simPath = require('path').resolve(__dirname, '..', '..', '..', 'hackmyagent', 'dist', 'simulation', 'index.js');
+      sim = await import(simPath);
+      SimulationEngine = sim.SimulationEngine;
+      parseSkillProfile = sim.parseSkillProfile;
+    }
 
     loaded = true;
     return true;
