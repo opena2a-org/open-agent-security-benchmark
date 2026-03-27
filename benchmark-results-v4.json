@@ -1,0 +1,29 @@
+{
+  "hma-static": {
+    "name": "HackMyAgent (static)",
+    "tier": "listed",
+    "f1": 0,
+    "precision": 0,
+    "recall": 0,
+    "fpr": 0,
+    "categories": 0
+  },
+  "hma-nanomind": {
+    "name": "HackMyAgent + NanoMind",
+    "tier": "listed",
+    "f1": 0.1847,
+    "precision": 0.4867,
+    "recall": 0.1481,
+    "fpr": 0.0263,
+    "categories": 2
+  },
+  "hma-simulation": {
+    "name": "HackMyAgent + Simulation",
+    "tier": "listed",
+    "f1": 0.0195,
+    "precision": 0.3667,
+    "recall": 0.0106,
+    "fpr": 0.0018,
+    "categories": 2
+  }
+}
