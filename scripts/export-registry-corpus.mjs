@@ -70,16 +70,27 @@ async function main() {
   const maxScore = parseInt(args.find(a => a.startsWith('--max-score='))?.split('=')[1] || '100');
   const outputFile = args.find(a => a.startsWith('--output='))?.split('=')[1] || join(__dirname, '..', 'corpus', 'registry-corpus.json');
 
-  if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL required');
+  const dbUrl = process.env.REGISTRY_DATABASE_URL || process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error('REGISTRY_DATABASE_URL or DATABASE_URL required');
     process.exit(1);
   }
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  // Parse URL explicitly to handle special chars in password
+  const parsedUrl = new URL(dbUrl);
+  const pool = new pg.Pool({
+    host: parsedUrl.hostname,
+    port: parseInt(parsedUrl.port) || 5432,
+    database: parsedUrl.pathname.slice(1).split('?')[0],
+    user: parsedUrl.username,
+    password: parsedUrl.password,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 15000,
+  });
 
   console.log(`Exporting registry scan results (limit=${limit}, score=${minScore}-${maxScore})...`);
 
-  // Pull packages with completed scans
+  // Pull packages with completed scans + their findings from the findings table
   const { rows } = await pool.query(`
     SELECT
       s.id as scan_id,
@@ -93,9 +104,19 @@ async function main() {
       s.high_count,
       s.medium_count,
       s.low_count,
-      s.findings_json,
       s.scanner_version,
-      s.scan_date
+      s.scan_date,
+      COALESCE(
+        (SELECT json_agg(json_build_object(
+          'category', f.category,
+          'severity', f.severity,
+          'title', f.title,
+          'type', f.finding_type
+        ))
+        FROM registry_security_findings f
+        WHERE f.scan_id = s.id AND f.false_positive = false AND f.suppressed = false),
+        '[]'::json
+      ) as findings
     FROM registry_security_scans s
     JOIN registry_packages p ON p.id = s.package_id
     WHERE s.scan_status = 'completed'
@@ -120,24 +141,31 @@ async function main() {
     const content = buildArtifactContent(row, artifactType);
 
     let label, category;
+    const findings = Array.isArray(row.findings) ? row.findings : [];
 
-    if (row.verdict === 'blocked' || (row.critical_count > 0 && row.overall_score < 50)) {
+    if (row.verdict === 'blocked') {
       label = 'malicious';
-      // Determine category from findings
-      const findings = Array.isArray(row.findings_json) ? row.findings_json : [];
       const criticalFinding = findings.find(f => f.severity === 'CRITICAL') || findings[0];
       category = mapFindingCategory(criticalFinding?.category);
       if (category) {
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-        malCount++;
-      } else {
-        label = 'edge_case'; // Can't determine category
-        edgeCount++;
       }
-    } else if (row.verdict === 'safe' && row.overall_score >= 80) {
+      malCount++;
+    } else if (row.verdict === 'warning' && row.overall_score >= 70) {
+      // High-scoring warnings are essentially benign with minor issues
       label = 'benign';
       benCount++;
+    } else if (row.verdict === 'warning' && row.overall_score < 40) {
+      // Low-scoring warnings are suspicious
+      label = 'malicious';
+      const criticalFinding = findings.find(f => f.severity === 'CRITICAL') || findings[0];
+      category = mapFindingCategory(criticalFinding?.category);
+      if (category) {
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+      }
+      malCount++;
     } else {
+      // Mid-range warnings and passed with low scores
       label = 'edge_case';
       edgeCount++;
     }
