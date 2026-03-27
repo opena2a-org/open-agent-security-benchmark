@@ -27,10 +27,10 @@ async function main() {
   console.log(`Dataset: ${dataset.totalSamples} samples (${dataset.maliciousSamples} malicious, ${dataset.benignSamples} benign, ${dataset.edgeCaseSamples} edge cases)`);
   console.log('');
 
-  // Run all adapters
+  // Run all adapters (HMA Semantic first as baseline for Cohen's Kappa)
   const adapters = [
-    new HMAStaticAdapter(),
     new HMASemanticAdapter(),
+    new HMAStaticAdapter(),
     new HMASimulationAdapter(),
     new HMARealStaticAdapter(),
     new HMARealASTAdapter(),
@@ -44,7 +44,7 @@ async function main() {
   // Print per-category breakdown for each adapter
   for (const [id, entry] of result.scannerResults) {
     console.log(`\n--- ${entry.scannerName} (${entry.tier.toUpperCase()}) ---`);
-    console.log(`  F1=${entry.metrics.f1.toFixed(3)} Prec=${entry.metrics.precision.toFixed(3)} Recall=${entry.metrics.recall.toFixed(3)} FPR=${(entry.metrics.fpr * 100).toFixed(1)}%`);
+    console.log(`  F1=${entry.metrics.f1.toFixed(3)} Prec=${entry.metrics.precision.toFixed(3)} Recall=${entry.metrics.recall.toFixed(3)} FPR=${(entry.metrics.fpr * 100).toFixed(1)}% Kappa=${entry.metrics.kappaVsHMA.toFixed(3)} Cats=${entry.metrics.categoryCoverage}/9`);
     for (const cat of entry.metrics.categoryMetrics) {
       if (cat.truePositives > 0 || cat.falseNegatives > 0) {
         console.log(`  ${cat.category.padEnd(25)} TP=${cat.truePositives} FP=${cat.falsePositives} FN=${cat.falseNegatives} F1=${cat.f1.toFixed(2)}`);

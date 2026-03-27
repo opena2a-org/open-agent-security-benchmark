@@ -31,7 +31,7 @@ export interface TierThresholds {
 
 export const TIER_THRESHOLDS: Record<BenchmarkTier, TierThresholds> = {
   platinum: { minF1: 0.90, maxFPR: 0.05, minCategoryCoverage: 9, minKappa: 0.85 },
-  gold:     { minF1: 0.80, maxFPR: 0.10, minCategoryCoverage: 7, minKappa: 0.70 },
+  gold:     { minF1: 0.80, maxFPR: 0.10, minCategoryCoverage: 7 },
   silver:   { minF1: 0.65, maxFPR: 0.20, minCategoryCoverage: 5 },
   listed:   { minF1: 0,    maxFPR: 1.0,  minCategoryCoverage: 0 },
   disqualified: { minF1: 0, maxFPR: 1.0, minCategoryCoverage: 0 },

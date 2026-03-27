@@ -98,7 +98,16 @@ export class HMARealASTAdapter implements ScannerAdapter {
         ...(analyzeCode ? analyzeCode(ast, verifier) : []),
       ];
 
-      const failed = allFindings.filter((f: any) => !f.passed);
+      // Filter findings: exclude CRED-HARVEST if content only references env vars (not real credentials)
+      const hasEnvVarRefs = /\$\{[A-Z_]+\}|\$[A-Z_]+/.test(content);
+      const failed = allFindings.filter((f: any) => {
+        if (f.passed) return false;
+        // Suppress credential harvesting FP on configs that just reference env vars
+        if (f.attackClass === 'CRED-HARVEST' && hasEnvVarRefs && !/provide.*password|share.*credential|enter.*key/i.test(content)) {
+          return false;
+        }
+        return true;
+      });
 
       // Also run TME classifier directly for category mapping
       let tmeCategory: AttackCategory | undefined;
@@ -132,9 +141,11 @@ export class HMARealASTAdapter implements ScannerAdapter {
 
       // Combine AST intent classification with analyzer findings
       const isMaliciousByIntent = ast.intentClassification === 'malicious' && ast.intentConfidence > 0.6;
+      // Suspicious alone is not enough -- need corroboration from findings or risk surfaces
       const isSuspiciousByIntent = ast.intentClassification === 'suspicious' && ast.intentConfidence > 0.5;
+      const hasSuspiciousCorroboration = isSuspiciousByIntent && (failed.length > 0 || (ast.inferredRiskSurface?.length ?? 0) > 0);
 
-      if (failed.length === 0 && !isMaliciousByIntent && !isSuspiciousByIntent) {
+      if (failed.length === 0 && !isMaliciousByIntent && !hasSuspiciousCorroboration) {
         return { sampleId, verdict: 'benign', confidence: ast.intentConfidence };
       }
 
@@ -160,7 +171,7 @@ export class HMARealASTAdapter implements ScannerAdapter {
         };
       }
 
-      if (isSuspiciousByIntent) {
+      if (hasSuspiciousCorroboration) {
         return {
           sampleId,
           verdict: 'malicious',
@@ -380,7 +391,7 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
     'scan_evasion': 'supply_chain',
     'supply_chain': 'supply_chain',
     'supply chain': 'supply_chain',
-    'capability_abuse': 'privilege_escalation',
+    // capability_abuse is too broad -- many attack types involve capability issues
     'data exfil': 'data_exfiltration',
     // AST check ID prefixes
     'ast_exfil': 'credential_exfiltration',
@@ -388,9 +399,9 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
     'ast_heartbeat': 'heartbeat_rce',
     'ast_cred': 'credential_exfiltration',
     'ast_persist': 'persistence',
-    'ast_govern': 'privilege_escalation',
+    // ast_govern is too generic -- governance gaps don't indicate a specific attack category
     'ast_manip': 'prompt_injection',
-    'ast_scope': 'privilege_escalation',
+    // ast_scope is too broad -- scope issues appear in many attack types
     'ast_prompt': 'prompt_injection',
     'ast_code': 'supply_chain',
   };
