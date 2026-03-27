@@ -337,7 +337,10 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
     'soul_bypass': 'unicode_stego',
     'semantic_mismatch': 'data_exfiltration',
     'scan_evasion': 'supply_chain',
+    'supply_chain': 'supply_chain',
+    'supply chain': 'supply_chain',
     'capability_abuse': 'privilege_escalation',
+    'data exfil': 'data_exfiltration',
     // AST check ID prefixes
     'ast_exfil': 'credential_exfiltration',
     'ast_inject': 'prompt_injection',
