@@ -107,7 +107,27 @@ export class HMARealASTAdapter implements ScannerAdapter {
         const tmeResult = tme.classify(content);
         if (tmeResult.attackClass !== 'none') {
           tmeCategory = mapAttackClass(tmeResult.attackClass);
+          // Disambiguate exfiltration subtypes based on content
+          if (tmeCategory === 'credential_exfiltration') {
+            tmeCategory = disambiguateExfiltration(content);
+          }
         }
+      }
+
+      // Disambiguate via AST risk surfaces (more precise than TME for category)
+      if (ast.inferredRiskSurface?.length > 0) {
+        for (const risk of ast.inferredRiskSurface) {
+          const riskCat = mapAttackClass(risk.attackClass);
+          if (riskCat && riskCat !== 'credential_exfiltration') {
+            tmeCategory = riskCat;
+            break;
+          }
+        }
+      }
+
+      // Check for unicode steganography (zero-width chars, soft hyphens, invisible separators)
+      if (/[\u200B\u200C\u200D\u2060\u2062\u00AD\uFEFF]/.test(content)) {
+        tmeCategory = 'unicode_stego';
       }
 
       // Combine AST intent classification with analyzer findings
@@ -313,6 +333,27 @@ export class HMARealFullAdapter implements ScannerAdapter {
 // Helpers
 // ============================================================================
 
+/**
+ * Distinguish credential exfiltration from data exfiltration.
+ * TME classifier sees both as "exfiltration" but the benchmark
+ * distinguishes between stealing credentials vs bulk data.
+ */
+function disambiguateExfiltration(content: string): AttackCategory {
+  const text = content.toLowerCase();
+  const hasDbPatterns = /select\s+\*\s+from|database|table|records|customers|orders|payments|pii|financial|medical/i.test(text);
+  const hasCredPatterns = /api[_-]?key|token|password|credential|secret|sk-ant|akia|ghp_/i.test(text);
+
+  // If it has DB/PII patterns but not credential patterns, it's data exfiltration
+  if (hasDbPatterns && !hasCredPatterns) return 'data_exfiltration';
+  // If it has both, check which is more prominent
+  if (hasDbPatterns && hasCredPatterns) {
+    const dbCount = (text.match(/select|database|table|record|customer|order|payment|pii|financial/gi) || []).length;
+    const credCount = (text.match(/api.?key|token|password|credential|secret/gi) || []).length;
+    return dbCount > credCount ? 'data_exfiltration' : 'credential_exfiltration';
+  }
+  return 'credential_exfiltration';
+}
+
 function mapAttackClass(attackClass?: string): AttackCategory | undefined {
   if (!attackClass) return undefined;
   const ac = attackClass.toLowerCase().replace(/-/g, '_');
@@ -326,7 +367,7 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
     'credential_abuse': 'credential_exfiltration',
     'lateral_movement': 'heartbeat_rce',
     'social_engineering': 'social_engineering',
-    'policy_violation': 'unicode_stego',
+    // policy_violation is too broad -- skip it, let other signals determine category
     // AST risk surface attack classes
     'skill_exfil': 'credential_exfiltration',
     'data_exfil': 'data_exfiltration',
@@ -334,7 +375,7 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
     'priv_escalation': 'privilege_escalation',
     'heartbeat_rce': 'heartbeat_rce',
     'cred_harvest': 'credential_exfiltration',
-    'soul_bypass': 'unicode_stego',
+    // soul_bypass is too broad -- skip it, let other signals determine category
     'semantic_mismatch': 'data_exfiltration',
     'scan_evasion': 'supply_chain',
     'supply_chain': 'supply_chain',
@@ -347,7 +388,7 @@ function mapAttackClass(attackClass?: string): AttackCategory | undefined {
     'ast_heartbeat': 'heartbeat_rce',
     'ast_cred': 'credential_exfiltration',
     'ast_persist': 'persistence',
-    'ast_govern': 'unicode_stego',
+    'ast_govern': 'privilege_escalation',
     'ast_manip': 'prompt_injection',
     'ast_scope': 'privilege_escalation',
     'ast_prompt': 'prompt_injection',
