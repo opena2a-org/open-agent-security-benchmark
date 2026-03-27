@@ -20,7 +20,11 @@ import type { BenchmarkDataset } from '../src/benchmark/types.js';
 
 async function main() {
   // Load dataset
-  const datasetPath = join(__dirname, '..', 'corpus', 'v1.json');
+  // Use v2 if available, fall back to v1
+  const fs = await import('node:fs');
+  const v2Path = join(__dirname, '..', 'corpus', 'v2.json');
+  const v1Path = join(__dirname, '..', 'corpus', 'v1.json');
+  const datasetPath = fs.existsSync(v2Path) ? v2Path : v1Path;
   const dataset: BenchmarkDataset = JSON.parse(readFileSync(datasetPath, 'utf-8'));
 
   console.log(`OASB Skills Security Benchmark v1.0`);
