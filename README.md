@@ -5,7 +5,7 @@
 > **Note:** OASB controls are also available in [HackMyAgent](https://github.com/opena2a-org/hackmyagent) v0.8.0+ via `opena2a benchmark`. This repository is the canonical source for the full 222-test evaluation suite and is actively maintained. ARP (the reference adapter) is now part of HackMyAgent — install via `npm install arp-guard`.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Tests](https://img.shields.io/badge/tests-222%20passing-brightgreen)](https://github.com/opena2a-org/oasb)
+[![Tests](https://img.shields.io/badge/tests-241%20passing-brightgreen)](https://github.com/opena2a-org/oasb)
 [![MITRE ATLAS](https://img.shields.io/badge/MITRE%20ATLAS-10%20techniques-teal)](https://atlas.mitre.org/)
 
 **MITRE ATT&CK Evaluations, but for AI agent security products.**
@@ -376,14 +376,27 @@ Products achieving full coverage receive a tier designation:
 | Gold | L2 compliance, 7+ attack categories detected |
 | Silver | L1 compliance, 4+ attack categories detected |
 
+### Benchmark Corpus (v1.0)
+
+90 ground-truth labeled samples for scanner evaluation:
+
+| | Count | Description |
+|---|---|---|
+| Malicious | 54 | 6 per attack category -- real skill.md, MCP configs, SOUL.md, system prompts, agent configs |
+| Benign | 27 | Well-governed skills, MCP configs, governance docs |
+| Edge cases | 9 | Security tools, defensive governance, broad-permission configs |
+
+```bash
+npx tsx scripts/run-benchmark.ts    # Run all adapters against v1 corpus
+```
+
 ### Benchmark Runner
 
 Run a competitive comparison of multiple security products against the skills security benchmark:
 
 ```bash
-npm run benchmark:skills                          # Run against reference adapter
+npx tsx scripts/run-benchmark.ts                  # Run all built-in adapters
 npm run benchmark:skills -- --adapter=my-adapter  # Run against your product
-npm run benchmark:skills -- --compare             # Side-by-side comparison
 ```
 
 Output includes per-control pass/fail, per-category detection rates, overall compliance level, and tier designation.
