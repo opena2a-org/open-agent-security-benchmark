@@ -68,7 +68,7 @@ async function loadHMA(): Promise<boolean> {
  */
 export class HMARealASTAdapter implements ScannerAdapter {
   name = 'HackMyAgent + NanoMind AST';
-  version = '0.12.1';
+  version = '0.12.3';
   id = 'hma-ast-real';
 
   private compiler: any = null;
@@ -197,7 +197,7 @@ export class HMARealASTAdapter implements ScannerAdapter {
  */
 export class HMARealStaticAdapter implements ScannerAdapter {
   name = 'HackMyAgent (static only)';
-  version = '0.12.0';
+  version = '0.12.3';
   id = 'hma-static-real';
 
   async scan(content: string, sampleId: string): Promise<ScannerResult> {
@@ -293,7 +293,7 @@ export class HMARealStaticAdapter implements ScannerAdapter {
  */
 export class HMARealFullAdapter implements ScannerAdapter {
   name = 'HackMyAgent + AST + Simulation';
-  version = '0.12.0';
+  version = '0.12.3';
   id = 'hma-full-real';
 
   private astAdapter = new HMARealASTAdapter();

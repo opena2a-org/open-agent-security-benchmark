@@ -34,7 +34,7 @@ export interface ScannerAdapter {
  */
 export class HMAStaticAdapter implements ScannerAdapter {
   name = 'HackMyAgent (static)';
-  version = '0.12.0';
+  version = '0.12.3';
   id = 'hma-static';
 
   async scan(content: string, sampleId: string): Promise<ScannerResult> {
@@ -65,7 +65,7 @@ export class HMAStaticAdapter implements ScannerAdapter {
  */
 export class HMASemanticAdapter implements ScannerAdapter {
   name = 'HackMyAgent + NanoMind';
-  version = '0.12.0';
+  version = '0.12.3';
   id = 'hma-nanomind';
 
   async scan(content: string, sampleId: string): Promise<ScannerResult> {
@@ -124,7 +124,7 @@ export class HMASemanticAdapter implements ScannerAdapter {
  */
 export class HMASimulationAdapter implements ScannerAdapter {
   name = 'HackMyAgent + Simulation';
-  version = '0.12.0';
+  version = '0.12.3';
   id = 'hma-simulation';
 
   async scan(content: string, sampleId: string): Promise<ScannerResult> {
