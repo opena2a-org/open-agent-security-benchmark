@@ -1,0 +1,75 @@
+{
+  "version": "2.0",
+  "date": "2026-04-02",
+  "datasetVersion": "v2-categorized",
+  "sampleCount": 4245,
+  "maliciousSamples": 270,
+  "benignSamples": 3881,
+  "edgeCaseSamples": 94,
+  "adapters": {
+    "hma-static-pipeline": {
+      "adapterId": "hma-static-pipeline",
+      "adapterName": "HMA Static Patterns (no NanoMind)",
+      "flagged": 153,
+      "flagRate": 0.036,
+      "truePositives": 138,
+      "falsePositives": 1,
+      "trueNegatives": 3880,
+      "falseNegatives": 132,
+      "precision": 0.993,
+      "recall": 0.511,
+      "f1": 0.675,
+      "fpr": 0.0003
+    },
+    "hma-tme-only": {
+      "adapterId": "hma-tme-only",
+      "adapterName": "NanoMind TME v0.5.0 (model only)",
+      "flagged": 294,
+      "flagRate": 0.069,
+      "truePositives": 243,
+      "falsePositives": 32,
+      "trueNegatives": 3849,
+      "falseNegatives": 27,
+      "precision": 0.884,
+      "recall": 0.900,
+      "f1": 0.892,
+      "fpr": 0.0082
+    },
+    "hma-pipeline": {
+      "adapterId": "hma-pipeline",
+      "adapterName": "HMA Full Pipeline (AST + NanoMind v0.5.0)",
+      "flagged": 436,
+      "flagRate": 0.103,
+      "truePositives": 270,
+      "falsePositives": 124,
+      "trueNegatives": 3757,
+      "falseNegatives": 0,
+      "precision": 0.685,
+      "recall": 1.000,
+      "f1": 0.813,
+      "fpr": 0.032,
+      "avgScanTimeMs": 4692.0
+    }
+  },
+  "dvaa": {
+    "totalScenarios": 70,
+    "detected": 61,
+    "detectionRate": 0.871,
+    "missed": 9
+  },
+  "paperComparison": {
+    "paper": "Holzbauer et al., arXiv:2603.16572, March 2026",
+    "table2FlagRates": {
+      "Socket": 0.0379,
+      "Snyk": 0.0769,
+      "agent-trust-hub": 0.1376,
+      "Cisco Skill Scanner (Skills.sh)": 0.1404,
+      "Cisco Skill Scanner (ClawHub)": 0.1674,
+      "GPT 5.3-based (Skills.sh)": 0.2728,
+      "VirusTotal": 0.362,
+      "GPT 5.3-based (ClawHub)": 0.388,
+      "OpenClaw Scanner": 0.4193
+    },
+    "keyFinding": "Only 0.12% consensus across 5 scanners on 27K skills"
+  }
+}
