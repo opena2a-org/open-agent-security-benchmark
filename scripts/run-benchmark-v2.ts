@@ -289,8 +289,9 @@ async function main() {
     printDetailedResults(detailed);
   }
 
-  // Save results
-  const outputPath = join(__dirname, '..', `benchmark-results-v5.json`);
+  // Save results (use different filename for partial runs)
+  const suffix = limit ? `-partial-${samples.length}` : '';
+  const outputPath = join(__dirname, '..', `benchmark-results-v5${suffix}.json`);
   const output = {
     version: '2.0',
     date: new Date().toISOString(),
