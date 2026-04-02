@@ -16,6 +16,7 @@ import type {
   LeaderboardEntry,
   AttackCategory,
 } from './types.js';
+import { reportBenchmarkTelemetry } from './telemetry-bridge.js';
 
 // ============================================================================
 // Scanner Adapters
@@ -238,6 +239,9 @@ export async function runBenchmark(
 
     const entry = scoreSubmission(submission, dataset, hmaBaseline);
     scannerResults.set(adapter.id, entry);
+
+    // Report telemetry (fire-and-forget, never blocks benchmark).
+    reportBenchmarkTelemetry(results, adapter.id, adapter.version).catch(() => {});
 
     comparisonTable.push({
       scanner: adapter.name,
