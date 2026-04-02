@@ -211,18 +211,52 @@ function printDetailedResults(detailed: DetailedResult): void {
     const c = detailed.perCategory[cat];
     if (c.total === 0 && c.fp === 0) continue;
     console.log(
-      `${cat.padEnd(28)} | ${String(c.total).padEnd(5)} | ${String(c.detected).padEnd(8)} | ${(c.flagRate * 100).toFixed(1).padEnd(9)}% | ${(c.precision * 100).toFixed(1).padEnd(9)}% | ${(c.recall * 100).toFixed(1).padEnd(6)}% | ${(c.f1 * 100).toFixed(1)}%`
+      `${cat.padEnd(28)} | ${String(c.total).padEnd(5)} | ${String(c.detected).padEnd(8)} | ${(c.flagRate * 100).toFixed(1).padStart(5)}% | ${(c.precision * 100).toFixed(1).padStart(5)}% | ${(c.recall * 100).toFixed(1).padStart(5)}% | ${(c.f1 * 100).toFixed(1).padStart(5)}%`
     );
   }
 }
 
+function printUsage(): void {
+  console.log(`OASB Benchmark Runner v2
+
+Usage: npx tsx scripts/run-benchmark-v2.ts [options]
+
+Options:
+  --categorized-only   Exclude 225 registry stubs with no malicious content (recommended)
+  --limit=N            Run on N samples (proportionally sampled)
+  --adapter=ADAPTER    Run specific adapter: static, tme-only, pipeline, all (default: all)
+  --help               Show this help
+
+Examples:
+  npx tsx scripts/run-benchmark-v2.ts --categorized-only              # Full benchmark (recommended)
+  npx tsx scripts/run-benchmark-v2.ts --categorized-only --limit=100  # Quick test
+  npx tsx scripts/run-benchmark-v2.ts --categorized-only --adapter=tme-only  # TME only
+
+Note: Without --categorized-only, the corpus includes 225 registry metadata-flagged
+stubs that contain no malicious content (just package names). These inflate false
+negative counts. Use --categorized-only for results matching BENCHMARK-RESULTS.md.
+`);
+}
+
 async function main() {
   const args = process.argv.slice(2);
+
+  if (args.includes('--help') || args.includes('-h')) {
+    printUsage();
+    return;
+  }
+
   const limitArg = args.find(a => a.startsWith('--limit='));
   const adapterArg = args.find(a => a.startsWith('--adapter='));
   const categorizedOnly = args.includes('--categorized-only');
   const limit = limitArg ? parseInt(limitArg.split('=')[1]) : undefined;
   const adapterFilter = adapterArg ? adapterArg.split('=')[1] : 'all';
+
+  if (!categorizedOnly) {
+    console.log('NOTE: Running without --categorized-only. Results will include 225 registry');
+    console.log('stubs with no malicious content. Add --categorized-only for standard results.');
+    console.log('');
+  }
 
   // Load dataset
   const v2Path = join(__dirname, '..', 'corpus', 'v2.json');

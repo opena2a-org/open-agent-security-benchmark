@@ -147,22 +147,22 @@ The genuine differentiation is not in flag rates (which are comparable) but in:
 
 ---
 
-## 5. Recommendation for Publication
+## 5. Reproducibility
 
-**Proceed to Session 7 (benchmark publication).** The results show genuine differentiation:
-- First published F1 score for a skill scanner (89.2%)
-- First ground-truth labeled benchmark dataset (OASB v2, 4,245 samples)
-- Comparable flag rates to industry scanners, with verified accuracy behind them
-- Independent DVAA validation (87.1% on 70 scenarios)
+```bash
+git clone https://github.com/opena2a-org/oasb.git
+cd oasb && npm install
 
-The honest framing: "While existing scanners report flag rates from 3.8% to 41.9% with only 0.12% consensus, HMA provides the first verified accuracy metrics on a ground-truth dataset, achieving 89.2% F1 with 90% recall."
+# Full benchmark (all adapters, ~7 minutes)
+npx tsx scripts/run-benchmark-v2.ts --categorized-only
 
----
+# DVAA ground-truth comparison
+npx tsx scripts/run-dvaa-benchmark.ts
 
-## Reproducibility
+# Quick test (100 samples)
+npx tsx scripts/run-benchmark-v2.ts --categorized-only --limit=100
+```
 
-- OASB v2 corpus: `oasb/corpus/v2.json`
-- Benchmark runner: `npx tsx scripts/run-benchmark-v2.ts --categorized-only`
-- DVAA benchmark: `npx tsx scripts/run-dvaa-benchmark.ts`
+- OASB v2 corpus: `corpus/v2.json`
 - Paper: arXiv:2603.16572 (Holzbauer et al., March 2026)
-- Code: https://anonymous.4open.science/r/agent_skills/
+- Paper code: https://anonymous.4open.science/r/agent_skills/

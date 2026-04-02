@@ -1,10 +1,15 @@
 /**
- * OASB Benchmark Runner Script
+ * DEPRECATED: Use run-benchmark-v2.ts instead.
  *
- * Runs all scanner adapters against the v1 corpus and prints results.
+ *   npx tsx scripts/run-benchmark-v2.ts --categorized-only
  *
- * Usage: npx tsx scripts/run-benchmark.ts
+ * This v1 runner used heuristic adapters against the v1 corpus (90 samples).
+ * It is kept for reference but may not work with current HMA versions.
  */
+
+console.error('This script is deprecated. Use run-benchmark-v2.ts instead:');
+console.error('  npx tsx scripts/run-benchmark-v2.ts --categorized-only');
+process.exit(1);
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
