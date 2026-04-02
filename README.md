@@ -20,6 +20,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-04-02 | Scanner Benchmark v2: 4,245-sample corpus, 3 HMA adapter tiers (static/TME/pipeline), DVAA ground-truth comparison. TME v0.5.0 achieves 89.2% F1. Comparison with Holzbauer et al. (arXiv:2603.16572). |
 | 2026-03-23 | `arp-guard` v0.3.0 — ARP now re-exports from HackMyAgent. Updated OASB to v0.3.0. All 222 tests pass. Updated Quick Start (no standalone ARP clone). |
 | 2026-02-19 | Added 40 AI-layer test scenarios (AT-AI-001 through AT-AI-005) for prompt, MCP, and A2A scanning via ARP v0.2.0. Total tests: 222. |
 | 2026-02-18 | Added integration tests for DVAA v0.4.0 MCP JSON-RPC and A2A endpoints. |
@@ -376,30 +377,37 @@ Products achieving full coverage receive a tier designation:
 | Gold | L2 compliance, 7+ attack categories detected |
 | Silver | L1 compliance, 4+ attack categories detected |
 
-### Benchmark Corpus (v1.0)
+### Benchmark Corpus (v2.0)
 
-90 ground-truth labeled samples for scanner evaluation:
+4,245 ground-truth labeled samples for scanner evaluation:
 
 | | Count | Description |
 |---|---|---|
-| Malicious | 54 | 6 per attack category -- real skill.md, MCP configs, SOUL.md, system prompts, agent configs |
-| Benign | 27 | Well-governed skills, MCP configs, governance docs |
-| Edge cases | 9 | Security tools, defensive governance, broad-permission configs |
-
-```bash
-npx tsx scripts/run-benchmark.ts    # Run all adapters against v1 corpus
-```
+| Malicious | 270 | 30 per attack category (9 categories) from DVAA, ARIA, HMA payloads, expert review |
+| Benign | 3,881 | Real skills from registry, open-source repos, well-governed configs |
+| Edge cases | 94 | Security tools, defensive governance, broad-permission configs |
 
 ### Benchmark Runner
 
-Run a competitive comparison of multiple security products against the skills security benchmark:
-
 ```bash
-npx tsx scripts/run-benchmark.ts                  # Run all built-in adapters
-npm run benchmark:skills -- --adapter=my-adapter  # Run against your product
+npx tsx scripts/run-benchmark-v2.ts --categorized-only            # Full corpus, all adapters
+npx tsx scripts/run-benchmark-v2.ts --categorized-only --limit=100  # Quick test with 100 samples
+npx tsx scripts/run-dvaa-benchmark.ts                              # DVAA ground-truth comparison (70 scenarios)
 ```
 
-Output includes per-control pass/fail, per-category detection rates, overall compliance level, and tier designation.
+### Latest Results (2026-04-02)
+
+Comparison of HMA scanner tiers on 4,245 labeled samples:
+
+| Scanner | F1 | Precision | Recall | FPR | Flag Rate |
+|---------|-----|-----------|--------|-----|-----------|
+| HMA Static (regex only) | 67.5% | 99.3% | 51.1% | 0.03% | 3.6% |
+| NanoMind TME v0.5.0 (model only) | 89.2% | 88.4% | 90.0% | 0.82% | 6.9% |
+| HMA Full Pipeline (AST + NanoMind) | 81.3% | 68.5% | 100.0% | 3.20% | 10.3% |
+
+DVAA controlled comparison: 61/70 scenarios detected (87.1%).
+
+See [BENCHMARK-RESULTS.md](BENCHMARK-RESULTS.md) for full per-category breakdown and comparison with Holzbauer et al. (arXiv:2603.16572).
 
 ---
 
