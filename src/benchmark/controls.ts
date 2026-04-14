@@ -1,9 +1,21 @@
 /**
- * OASB Skills Security Track -- SS-01 through SS-10
+ * OASB Skills Security Track -- SS-01 through SS-10, SEC-021
  *
- * 10 new controls for skill supply chain security.
+ * Controls for skill supply chain security plus policy enforcement.
  * Maps to compliance levels: L1 (Basic), L2 (Standard), L3 (Advanced).
  */
+
+export interface RegulatoryMapping {
+  framework: 'NIST AI RMF' | 'SOC 2' | 'ISO 27001' | 'EU AI Act' | 'CISA AI Security';
+  reference: string;
+}
+
+export interface EvidenceTier {
+  tier: 'T1' | 'T2' | 'T3';
+  description: string;
+  requires: string[];
+  attestationLevel: 'L1' | 'L2' | 'L3';
+}
 
 export interface SkillSecurityControl {
   id: string;
@@ -12,6 +24,8 @@ export interface SkillSecurityControl {
   complianceLevel: 'L1' | 'L2' | 'L3';
   mapsTo: string[]; // HMA check IDs or attack classes
   verificationMethod: string;
+  regulatoryMappings?: RegulatoryMapping[];
+  evidenceTiers?: EvidenceTier[];
 }
 
 export const SKILL_SECURITY_CONTROLS: SkillSecurityControl[] = [
@@ -95,13 +109,52 @@ export const SKILL_SECURITY_CONTROLS: SkillSecurityControl[] = [
     mapsTo: ['Lifecycle governance'],
     verificationMethod: 'No unused skills > 30 days, all versions pinned, update approvals logged',
   },
+  {
+    id: 'SEC-021',
+    name: 'Policy Enforcement Fail-Closed Semantics',
+    description:
+      'Policy enforcement must DENY on unresolvable inputs. No threshold-based fallbacks, no ask-user escalation, no silent bypass. Parse failures produce DENY with POLICY_PARSE_FAILURE event. Aligned with OPENA2A-IB-007 (Threshold Bypass).',
+    complianceLevel: 'L1',
+    mapsTo: ['PEI-001', 'PEI-002', 'PEI-003', 'CR-001', 'CR-002'],
+    verificationMethod:
+      'T1: docs declare parse-to-deny semantics. T2: PEI-001 + PEI-003 scans pass. T3: POLICY_PARSE_FAILURE log clean over attestation window.',
+    regulatoryMappings: [
+      { framework: 'NIST AI RMF', reference: 'GOVERN 1.6' },
+      { framework: 'NIST AI RMF', reference: 'MANAGE 2.2' },
+      { framework: 'NIST AI RMF', reference: 'MEASURE 2.5' },
+      { framework: 'SOC 2', reference: 'CC6.1' },
+      { framework: 'ISO 27001', reference: 'A.8.20' },
+      { framework: 'EU AI Act', reference: 'Art. 9' },
+      { framework: 'CISA AI Security', reference: 'Section 3.2' },
+    ],
+    evidenceTiers: [
+      {
+        tier: 'T1',
+        description: 'Documented parse-to-deny enforcement semantics in enforcement architecture docs',
+        requires: ['docs/architecture/arp-enforcement.md'],
+        attestationLevel: 'L1',
+      },
+      {
+        tier: 'T2',
+        description: 'Static scan evidence: PEI-001 (threshold fallback detection) and PEI-003 (ask-user escalation detection) pass with no findings',
+        requires: ['PEI-001', 'PEI-003'],
+        attestationLevel: 'L2',
+      },
+      {
+        tier: 'T3',
+        description: 'Runtime evidence: POLICY_PARSE_FAILURE event log shows no uncontained parse failures over the attestation window',
+        requires: ['POLICY_PARSE_FAILURE telemetry stream', 'Attestation window >= 30 days'],
+        attestationLevel: 'L3',
+      },
+    ],
+  },
 ];
 
 /** Map compliance level to required controls */
 export const COMPLIANCE_LEVELS = {
-  L1: ['SS-01', 'SS-03', 'SS-04', 'SS-06'],
-  L2: ['SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08'],
-  L3: ['SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08', 'SS-09', 'SS-10'],
+  L1: ['SS-01', 'SS-03', 'SS-04', 'SS-06', 'SEC-021'],
+  L2: ['SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08', 'SEC-021'],
+  L3: ['SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08', 'SS-09', 'SS-10', 'SEC-021'],
 };
 
 /**

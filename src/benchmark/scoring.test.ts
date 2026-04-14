@@ -195,22 +195,28 @@ describe('Compliance Level Assessment', () => {
   });
 
   it('returns L1 when basic controls pass', () => {
-    expect(assessComplianceLevel(['SS-01', 'SS-03', 'SS-04', 'SS-06'])).toBe('L1');
+    expect(assessComplianceLevel(['SS-01', 'SS-03', 'SS-04', 'SS-06', 'SEC-021'])).toBe('L1');
   });
 
   it('returns L2 when standard controls pass', () => {
     expect(assessComplianceLevel([
-      'SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08',
+      'SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08', 'SEC-021',
     ])).toBe('L2');
   });
 
   it('returns L3 when all controls pass', () => {
     expect(assessComplianceLevel([
-      'SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08', 'SS-09', 'SS-10',
+      'SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-05', 'SS-06', 'SS-07', 'SS-08', 'SS-09', 'SS-10', 'SEC-021',
     ])).toBe('L3');
   });
 
   it('returns L1 when only some L2 controls pass', () => {
-    expect(assessComplianceLevel(['SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-06'])).toBe('L1');
+    expect(assessComplianceLevel(['SS-01', 'SS-02', 'SS-03', 'SS-04', 'SS-06', 'SEC-021'])).toBe('L1');
+  });
+
+  it('returns none when SEC-021 is missing even if all SS controls pass', () => {
+    expect(assessComplianceLevel([
+      'SS-01', 'SS-03', 'SS-04', 'SS-06',
+    ])).toBe('none');
   });
 });
