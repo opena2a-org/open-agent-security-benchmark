@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Matches ci.yml — src imports from arp-guard (devDep) but the test
+      # suite expects a sibling ../arp checkout to build against.
+      - name: Clone ARP dependency
+        env:
+          GH_TOKEN: ${{ secrets.ARP_CLONE_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GH_TOKEN}@github.com/opena2a-org/arp.git ../arp
+          cd ../arp && npm install && npm run build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --exclude src/e2e/
+
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
+
+      - name: Verify provenance on npm
+        run: |
+          deadline=$((SECONDS + 300))
+          while [ $SECONDS -lt $deadline ]; do
+            attestations=$(npm view "@opena2a/oasb" dist.attestations --json 2>&1 || true)
+            if [ -n "$attestations" ] && [ "$attestations" != "null" ] && [ "$attestations" != "{}" ]; then
+              echo "Provenance verified for @opena2a/oasb"
+              exit 0
+            fi
+            echo "Attestations not yet visible, retrying in 15s... (elapsed ${SECONDS}s)"
+            sleep 15
+          done
+          echo "::error::Provenance attestations missing from npm for @opena2a/oasb after 5 minutes"
+          exit 1
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
