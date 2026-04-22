@@ -61,6 +61,7 @@
   "author": "OpenA2A",
   "license": "Apache-2.0",
   "dependencies": {
-    "hackmyagent": "^0.17.9"
+    "hackmyagent": "^0.17.9",
+    "pg": "^8.20.0"
   }
 }
