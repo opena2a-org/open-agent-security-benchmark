@@ -192,7 +192,7 @@ export class HMARealASTAdapter implements ScannerAdapter {
 // ============================================================================
 
 /**
- * Uses HMA's static pattern matching (204 checks) without NanoMind.
+ * Uses HMA's static pattern matching (238 checks) without NanoMind.
  * Baseline for comparison.
  */
 export class HMARealStaticAdapter implements ScannerAdapter {
